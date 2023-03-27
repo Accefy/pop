@@ -3,7 +3,7 @@ module github.com/Accefy/pop
 go 1.16
 
 require (
-	github.com/XSAM/otelsql v0.20.0 // indirect
+	github.com/XSAM/otelsql v0.20.0
 	github.com/fatih/color v1.13.0
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/gobuffalo/attrs v1.0.3
@@ -14,6 +14,7 @@ require (
 	github.com/gobuffalo/logger v1.0.7
 	github.com/gobuffalo/nulls v0.4.2
 	github.com/gobuffalo/plush/v4 v4.1.18
+	github.com/gobuffalo/pop/v6 v6.1.1
 	github.com/gobuffalo/validate/v3 v3.3.3
 	github.com/gofrs/uuid v4.3.1+incompatible
 	github.com/jackc/pgconn v1.13.0

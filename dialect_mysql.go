@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Accefy/pop/v6/internal/defaults"
+	"github.com/Accefy/pop/internal/defaults"
 	_mysql "github.com/go-sql-driver/mysql" // Load MySQL Go driver
 	"github.com/gobuffalo/fizz"
 	"github.com/gobuffalo/fizz/translators"
