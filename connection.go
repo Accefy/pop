@@ -10,8 +10,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gobuffalo/pop/v6/internal/defaults"
-	"github.com/gobuffalo/pop/v6/internal/randx"
+	"github.com/Accefy/pop/v6/internal/defaults"
+	"github.com/Accefy/pop/v6/internal/randx"
 	"github.com/gobuffalo/pop/v6/logging"
 )
 

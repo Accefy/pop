@@ -8,10 +8,10 @@ import (
 	"os/exec"
 	"sync"
 
+	"github.com/Accefy/pop/v6/internal/defaults"
 	"github.com/gobuffalo/fizz"
 	"github.com/gobuffalo/fizz/translators"
 	"github.com/gobuffalo/pop/v6/columns"
-	"github.com/gobuffalo/pop/v6/internal/defaults"
 	"github.com/gobuffalo/pop/v6/logging"
 	"github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4/stdlib" // Load pgx driver
