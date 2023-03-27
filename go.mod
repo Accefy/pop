@@ -1,4 +1,4 @@
-module github.com/gobuffalo/pop/v6
+module github.com/Accefy/pop
 
 go 1.16
 
