@@ -12,6 +12,7 @@ import (
 	pgx "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/luna-duclos/instrumentedsql"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 const instrumentedDriverName = "instrumented-sql-driver"
@@ -84,7 +85,7 @@ func instrumentDriver(deets *ConnectionDetails, defaultDriverName string) (drive
 // translate arguments (e.g. `?` to `$1`) in SQL queries. Because we use
 // a custom driver name when using instrumentation, this detection would fail
 // otherwise.
-func openPotentiallyInstrumentedConnection(c dialect, dsn string) (*sqlx.DB, error) {
+func openPotentiallyInstrumentedConnection(c dialect, dsn string, attributes ...attribute.KeyValue) (*sqlx.DB, error) {
 	fmt.Println("OPEN POTENTIALLY")
 	driverName, dialect, err := instrumentDriver(c.Details(), c.DefaultDriver())
 	if err != nil {
@@ -94,6 +95,37 @@ func openPotentiallyInstrumentedConnection(c dialect, dsn string) (*sqlx.DB, err
 	con, err := otelsql.Open(driverName, dsn)
 	if err != nil {
 		return nil, fmt.Errorf("could not open database connection: %w", err)
+	}
+
+	return sqlx.NewDb(con, dialect), nil
+}
+
+// openPotentiallyInstrumentedConnection first opens a raw SQL connection and then wraps it with `sqlx`.
+//
+// We do this because `sqlx` needs the database type in order to properly
+// translate arguments (e.g. `?` to `$1`) in SQL queries. Because we use
+// a custom driver name when using instrumentation, this detection would fail
+// otherwise.
+func openPotentiallyInstrumentedConnectionWithOtel(c dialect, dsn string, attributes ...attribute.KeyValue) (*sqlx.DB, error) {
+	fmt.Println("OPEN POTENTIALLY")
+	driverName, dialect, err := instrumentDriver(c.Details(), c.DefaultDriver())
+	if err != nil {
+		return nil, err
+	}
+
+	con, err := otelsql.Open(driverName, dsn)
+	if err != nil {
+		return nil, fmt.Errorf("could not open database connection: %w", err)
+	}
+
+	if len(attributes) > 0 {
+		err = otelsql.RegisterDBStatsMetrics(con, otelsql.WithAttributes(
+			attributes...,
+		))
+		if err != nil {
+			panic(err)
+			return nil, fmt.Errorf("could not configure tracing: %w", err)
+		}
 	}
 
 	return sqlx.NewDb(con, dialect), nil

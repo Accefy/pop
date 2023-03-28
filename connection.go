@@ -13,6 +13,7 @@ import (
 	"github.com/Accefy/pop/internal/defaults"
 	"github.com/Accefy/pop/internal/randx"
 	"github.com/gobuffalo/pop/v6/logging"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // Connections contains all available connections
@@ -103,7 +104,7 @@ func Connect(e string) (*Connection, error) {
 }
 
 // Open creates a new datasource connection
-func (c *Connection) Open() error {
+func (c *Connection) Open(attributes ...attribute.KeyValue) error {
 	if c.Store != nil {
 		return nil
 	}
@@ -112,7 +113,7 @@ func (c *Connection) Open() error {
 	}
 	details := c.Dialect.Details()
 
-	db, err := openPotentiallyInstrumentedConnection(c.Dialect, c.Dialect.URL())
+	db, err := openPotentiallyInstrumentedConnectionWithOtel(c.Dialect, c.Dialect.URL(), attributes...)
 	if err != nil {
 		return err
 	}
