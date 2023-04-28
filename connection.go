@@ -113,7 +113,7 @@ func (c *Connection) Open(attributes ...attribute.KeyValue) error {
 	}
 	details := c.Dialect.Details()
 
-	db, err := openPotentiallyInstrumentedConnectionWithOtel(c.Dialect, c.Dialect.URL(), attributes...)
+	db, err := openPotentiallyInstrumentedConnection(c.Dialect, c.Dialect.URL(), attributes...)
 	if err != nil {
 		return err
 	}
