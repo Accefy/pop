@@ -3,7 +3,7 @@ package pop
 import (
 	"context"
 	"database/sql"
-	"errors"
+	"github.com/pkg/errors"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -13,6 +13,7 @@ import (
 	"github.com/Accefy/pop/internal/defaults"
 	"github.com/Accefy/pop/internal/randx"
 	"github.com/gobuffalo/pop/v6/logging"
+	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -101,6 +102,19 @@ func Connect(e string) (*Connection, error) {
 		return c, fmt.Errorf("couldn't open connection for %s: %w", e, err)
 	}
 	return c, nil
+}
+
+// Open creates a new datasource connection
+func (c *Connection) SQLXOpen() error {
+	if c.Store != nil {
+		return nil
+	}
+	db, err := sqlx.Open(c.Dialect.Details().Dialect, c.Dialect.URL())
+	db.SetMaxOpenConns(c.Dialect.Details().Pool)
+	if err == nil {
+		c.Store = &dB{db}
+	}
+	return errors.Wrap(err, "coudn't connection to database")
 }
 
 // Open creates a new datasource connection
