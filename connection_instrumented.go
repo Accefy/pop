@@ -121,7 +121,7 @@ func openPotentiallyInstrumentedConnectionWithOtel(c dialect, dsn string, attrib
 	if len(attributes) > 0 {
 		err = otelsql.RegisterDBStatsMetrics(con, otelsql.WithAttributes(
 			attributes...,
-		), otelsql.WithSQLCommenter(false))
+		))
 		if err != nil {
 			panic(err)
 			return nil, fmt.Errorf("could not configure tracing: %w", err)
