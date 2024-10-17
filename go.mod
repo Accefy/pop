@@ -3,7 +3,7 @@ module github.com/Accefy/pop
 go 1.22
 
 require (
-	github.com/XSAM/otelsql v0.20.0
+	github.com/XSAM/otelsql v0.35.0
 	github.com/fatih/color v1.13.0
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/gobuffalo/attrs v1.0.3
@@ -24,7 +24,7 @@ require (
 	github.com/luna-duclos/instrumentedsql v1.1.3
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/spf13/cobra v1.6.1
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.9.0
 	golang.org/x/sync v0.1.0
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -34,7 +34,7 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
-	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gobuffalo/github_flavored_markdown v1.1.3 // indirect
 	github.com/gobuffalo/helpers v0.6.7 // indirect
@@ -61,13 +61,13 @@ require (
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
 	github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	go.opentelemetry.io/otel v1.14.0 // indirect
-	go.opentelemetry.io/otel/metric v0.37.0 // indirect
-	go.opentelemetry.io/otel/trace v1.14.0 // indirect
+	go.opentelemetry.io/otel v1.31.0 // indirect
+	go.opentelemetry.io/otel/metric v1.31.0 // indirect
+	go.opentelemetry.io/otel/trace v1.31.0 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20221002022538-bcab6841153b // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.12 // indirect
