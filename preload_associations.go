@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Accefy/pop/v6/internal/defaults"
+	"github.com/Accefy/pop/internal/defaults"
 	"github.com/gobuffalo/flect"
 	"github.com/gobuffalo/pop/v6/logging"
 	"github.com/jmoiron/sqlx"

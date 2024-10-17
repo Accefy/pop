@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Accefy/pop/v6/internal/defaults"
+	"github.com/Accefy/pop/internal/defaults"
 	"github.com/gobuffalo/pop/v6/logging"
 	"github.com/luna-duclos/instrumentedsql"
 )

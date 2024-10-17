@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/Accefy/pop/v6/internal/defaults"
+	"github.com/Accefy/pop/internal/defaults"
 	"github.com/gobuffalo/flect"
 	"github.com/gobuffalo/nulls"
 )

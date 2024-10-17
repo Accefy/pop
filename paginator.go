@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/Accefy/pop/v6/internal/defaults"
+	"github.com/Accefy/pop/internal/defaults"
 )
 
 // PaginatorPerPageDefault is the amount of results per page

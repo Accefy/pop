@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Accefy/pop/v6/internal/defaults"
+	"github.com/Accefy/pop/internal/defaults"
 	"github.com/gobuffalo/fizz"
 	"github.com/gobuffalo/fizz/translators"
 	"github.com/gobuffalo/pop/v6/columns"
