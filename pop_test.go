@@ -52,7 +52,7 @@ func init() {
 	dialect := os.Getenv("SODA_DIALECT")
 
 	if dialect == "" {
-		log(logging.Info, "Skipping integration tests because SODA_DIALECT is blank or unset")
+		log(logging.Info, nil, "Skipping integration tests because SODA_DIALECT is blank or unset")
 		return
 	}
 
@@ -61,7 +61,7 @@ func init() {
 	}
 
 	var err error
-	log(logging.Info, "Run test with dialect %v", dialect)
+	log(logging.Info, nil, "Run test with dialect %v", dialect)
 	PDB, err = Connect(dialect)
 	if err != nil {
 		stdlog.Panic(err)
@@ -69,7 +69,7 @@ func init() {
 }
 
 func transaction(fn func(tx *Connection)) {
-	err := PDB.Rollback(func(tx *Connection) {
+	err := PDB.Rollback(nil, func(tx *Connection) {
 		fn(tx)
 	})
 	if err != nil {
@@ -178,7 +178,7 @@ type Taxis []Taxi
 // This method is not required and may be deleted.
 func (b *Book) Validate(tx *Connection) (*validate.Errors, error) {
 	// Execute another query to test if Validate causes eager creation to fail
-	if err := tx.All(&Taxis{}); err != nil {
+	if err := tx.All(nil, &Taxis{}); err != nil {
 		return nil, err
 	}
 	return validate.Validate(

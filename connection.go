@@ -13,6 +13,7 @@ import (
 	"github.com/gobuffalo/pop/v6/internal/defaults"
 	"github.com/gobuffalo/pop/v6/internal/randx"
 	"github.com/gobuffalo/pop/v6/logging"
+	"github.com/gofrs/uuid"
 )
 
 // Connections contains all available connections
@@ -153,7 +154,7 @@ func (c *Connection) Close() error {
 // Transaction will start a new transaction on the connection. If the inner function
 // returns an error then the transaction will be rolled back, otherwise the transaction
 // will automatically commit at the end.
-func (c *Connection) Transaction(fn func(tx *Connection) error) error {
+func (c *Connection) Transaction(requestID *uuid.UUID, fn func(tx *Connection) error) error {
 	return c.Dialect.Lock(func() (err error) {
 		var dberr error
 
@@ -161,14 +162,14 @@ func (c *Connection) Transaction(fn func(tx *Connection) error) error {
 		if err != nil {
 			return err
 		}
-		txlog(logging.SQL, cn, "BEGIN Transaction ---")
+		txlog(logging.SQL, requestID, cn, "BEGIN Transaction ---")
 
 		defer func() {
 			if ex := recover(); ex != nil {
-				txlog(logging.SQL, cn, "ROLLBACK Transaction (inner function panic) ---")
+				txlog(logging.SQL, requestID, cn, "ROLLBACK Transaction (inner function panic) ---")
 				dberr = cn.TX.Rollback()
 				if dberr != nil {
-					txlog(logging.Error, cn, "database error while inner panic rollback: %w", dberr)
+					txlog(logging.Error, requestID, cn, "database error while inner panic rollback: %w", dberr)
 				}
 				panic(ex)
 			}
@@ -176,10 +177,10 @@ func (c *Connection) Transaction(fn func(tx *Connection) error) error {
 
 		err = fn(cn)
 		if err != nil {
-			txlog(logging.SQL, cn, "ROLLBACK Transaction ---")
+			txlog(logging.SQL, requestID, cn, "ROLLBACK Transaction ---")
 			dberr = cn.TX.Rollback()
 		} else {
-			txlog(logging.SQL, cn, "END Transaction ---")
+			txlog(logging.SQL, requestID, cn, "END Transaction ---")
 			dberr = cn.TX.Commit()
 		}
 
@@ -194,15 +195,15 @@ func (c *Connection) Transaction(fn func(tx *Connection) error) error {
 
 // Rollback will open a new transaction and automatically rollback that transaction
 // when the inner function returns, regardless. This can be useful for tests, etc...
-func (c *Connection) Rollback(fn func(tx *Connection)) error {
+func (c *Connection) Rollback(requestID *uuid.UUID, fn func(tx *Connection)) error {
 	// TODO: the name of the method could be changed to express it better.
 	cn, err := c.NewTransaction()
 	if err != nil {
 		return err
 	}
-	txlog(logging.SQL, cn, "BEGIN Transaction for Rollback ---")
+	txlog(logging.SQL, requestID, cn, "BEGIN Transaction for Rollback ---")
 	fn(cn)
-	txlog(logging.SQL, cn, "ROLLBACK Transaction as planned ---")
+	txlog(logging.SQL, requestID, cn, "ROLLBACK Transaction as planned ---")
 	return cn.TX.Rollback()
 }
 
@@ -297,7 +298,7 @@ func (c *Connection) timeFunc(name string, fn func() error) error {
 // Connection type, TX.ID, and optionally a copy ID. It makes it easy to trace
 // related queries for a single request.
 //
-//  examples: "conn-7881415437117811350", "tx-4924907692359316530", "tx-831769923571164863-ytzxZa"
+//	examples: "conn-7881415437117811350", "tx-4924907692359316530", "tx-831769923571164863-ytzxZa"
 func (c *Connection) setID(id ...string) {
 	if len(id) == 1 {
 		idElems := strings.Split(id[0], "-")

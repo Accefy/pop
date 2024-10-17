@@ -251,7 +251,7 @@ func preloadHasMany(tx *Connection, asoc *AssociationMetaInfo, mmi *ModelMetaInf
 		q.Order(asoc.Field.Tag.Get("order_by"))
 	}
 
-	err := q.Where(fmt.Sprintf("%s in (?)", fk), ids).All(slice.Interface())
+	err := q.Where(fmt.Sprintf("%s in (?)", fk), ids).All(nil, slice.Interface())
 	if err != nil {
 		return err
 	}
@@ -318,7 +318,7 @@ func preloadHasOne(tx *Connection, asoc *AssociationMetaInfo, mmi *ModelMetaInfo
 	q.eagerFields = []string{}
 
 	slice := asoc.toSlice()
-	err := q.Where(fmt.Sprintf("%s in (?)", fk), ids).All(slice.Interface())
+	err := q.Where(fmt.Sprintf("%s in (?)", fk), ids).All(nil, slice.Interface())
 	if err != nil {
 		return err
 	}
@@ -387,7 +387,7 @@ func preloadBelongsTo(tx *Connection, asoc *AssociationMetaInfo, mmi *ModelMetaI
 	q.eagerFields = []string{}
 
 	slice := asoc.toSlice()
-	err := q.Where(fmt.Sprintf("%s in (?)", fk), fkids).All(slice.Interface())
+	err := q.Where(fmt.Sprintf("%s in (?)", fk), fkids).All(nil, slice.Interface())
 	if err != nil {
 		return err
 	}
@@ -466,7 +466,7 @@ func preloadManyToMany(tx *Connection, asoc *AssociationMetaInfo, mmi *ModelMeta
 		return err
 	}
 
-	txlog(logging.SQL, cn, sql, args...)
+	txlog(logging.SQL, nil, cn, sql, args...)
 	rows, err := cn.Queryx(sql, args...)
 	if err != nil {
 		return err
@@ -504,7 +504,7 @@ func preloadManyToMany(tx *Connection, asoc *AssociationMetaInfo, mmi *ModelMeta
 	}
 
 	slice := asoc.toSlice()
-	q.Where("id in (?)", fkids).All(slice.Interface())
+	q.Where("id in (?)", fkids).All(nil, slice.Interface())
 
 	// 2.2) load all nested associations from this assoc.
 	if asocNestedFields, ok := mmi.nestedFields[asoc.Path]; ok {

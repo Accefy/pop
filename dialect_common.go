@@ -42,7 +42,7 @@ func (commonDialect) Quote(key string) string {
 	return strings.Join(parts, ".")
 }
 
-func genericCreate(c *Connection, model *Model, cols columns.Columns, quoter quotable) error {
+func genericCreate(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns, quoter quotable) error {
 	keyType, err := model.PrimaryKeyType()
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func genericCreate(c *Connection, model *Model, cols columns.Columns, quoter quo
 		cols.Remove(model.IDField())
 		w := cols.Writeable()
 		query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", quoter.Quote(model.TableName()), w.QuotedString(quoter), w.SymbolizedString())
-		txlog(logging.SQL, c, query, model.Value)
+		txlog(logging.SQL, requestID, c, query, model.Value)
 		res, err := c.Store.NamedExecContext(model.ctx, query, model.Value)
 		if err != nil {
 			return err
@@ -81,7 +81,7 @@ func genericCreate(c *Connection, model *Model, cols columns.Columns, quoter quo
 		w := cols.Writeable()
 		w.Add(model.IDField())
 		query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", quoter.Quote(model.TableName()), w.QuotedString(quoter), w.SymbolizedString())
-		txlog(logging.SQL, c, query, model.Value)
+		txlog(logging.SQL, requestID, c, query, model.Value)
 		if _, err := c.Store.NamedExecContext(model.ctx, query, model.Value); err != nil {
 			return fmt.Errorf("named insert: %w", err)
 		}
@@ -90,9 +90,9 @@ func genericCreate(c *Connection, model *Model, cols columns.Columns, quoter quo
 	return fmt.Errorf("can not use %s as a primary key type!", keyType)
 }
 
-func genericUpdate(c *Connection, model *Model, cols columns.Columns, quoter quotable) error {
+func genericUpdate(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns, quoter quotable) error {
 	stmt := fmt.Sprintf("UPDATE %s AS %s SET %s WHERE %s", quoter.Quote(model.TableName()), model.Alias(), cols.Writeable().QuotedUpdateString(quoter), model.WhereNamedID())
-	txlog(logging.SQL, c, stmt, model.ID())
+	txlog(logging.SQL, requestID, c, stmt, model.ID())
 	_, err := c.Store.NamedExecContext(model.ctx, stmt, model.Value)
 	if err != nil {
 		return err
@@ -100,7 +100,7 @@ func genericUpdate(c *Connection, model *Model, cols columns.Columns, quoter quo
 	return nil
 }
 
-func genericUpdateQuery(c *Connection, model *Model, cols columns.Columns, quoter quotable, query Query, bindType int) (int64, error) {
+func genericUpdateQuery(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns, quoter quotable, query Query, bindType int) (int64, error) {
 	q := fmt.Sprintf("UPDATE %s AS %s SET %s", quoter.Quote(model.TableName()), model.Alias(), cols.Writeable().QuotedUpdateString(quoter))
 
 	q, updateArgs, err := sqlx.Named(q, model.Value)
@@ -113,7 +113,7 @@ func genericUpdateQuery(c *Connection, model *Model, cols columns.Columns, quote
 
 	q = sqlx.Rebind(bindType, q)
 
-	result, err := genericExec(c, q, append(updateArgs, sb.args...)...)
+	result, err := genericExec(c, requestID, q, append(updateArgs, sb.args...)...)
 	if err != nil {
 		return 0, err
 	}
@@ -126,30 +126,30 @@ func genericUpdateQuery(c *Connection, model *Model, cols columns.Columns, quote
 	return n, err
 }
 
-func genericDestroy(c *Connection, model *Model, quoter quotable) error {
+func genericDestroy(c *Connection, requestID *uuid.UUID, model *Model, quoter quotable) error {
 	stmt := fmt.Sprintf("DELETE FROM %s AS %s WHERE %s", quoter.Quote(model.TableName()), model.Alias(), model.WhereID())
-	_, err := genericExec(c, stmt, model.ID())
+	_, err := genericExec(c, requestID, stmt, model.ID())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func genericDelete(c *Connection, model *Model, query Query) error {
+func genericDelete(c *Connection, requestID *uuid.UUID, model *Model, query Query) error {
 	sqlQuery, args := query.ToSQL(model)
-	_, err := genericExec(c, sqlQuery, args...)
+	_, err := genericExec(c, requestID, sqlQuery, args...)
 	return err
 }
 
-func genericExec(c *Connection, stmt string, args ...interface{}) (sql.Result, error) {
-	txlog(logging.SQL, c, stmt, args...)
+func genericExec(c *Connection, requestID *uuid.UUID, stmt string, args ...interface{}) (sql.Result, error) {
+	txlog(logging.SQL, requestID, c, stmt, args...)
 	res, err := c.Store.ExecContext(c.Context(), stmt, args...)
 	return res, err
 }
 
-func genericSelectOne(c *Connection, model *Model, query Query) error {
+func genericSelectOne(c *Connection, requestID *uuid.UUID, model *Model, query Query) error {
 	sqlQuery, args := query.ToSQL(model)
-	txlog(logging.SQL, query.Connection, sqlQuery, args...)
+	txlog(logging.SQL, requestID, query.Connection, sqlQuery, args...)
 	err := c.Store.GetContext(model.ctx, model.Value, sqlQuery, args...)
 	if err != nil {
 		return err
@@ -157,9 +157,9 @@ func genericSelectOne(c *Connection, model *Model, query Query) error {
 	return nil
 }
 
-func genericSelectMany(c *Connection, models *Model, query Query) error {
+func genericSelectMany(c *Connection, requestID *uuid.UUID, models *Model, query Query) error {
 	sqlQuery, args := query.ToSQL(models)
-	txlog(logging.SQL, query.Connection, sqlQuery, args...)
+	txlog(logging.SQL, requestID, query.Connection, sqlQuery, args...)
 	err := c.Store.SelectContext(models.ctx, models.Value, sqlQuery, args...)
 	if err != nil {
 		return err
@@ -184,7 +184,7 @@ func genericLoadSchema(d dialect, r io.Reader) error {
 	}
 
 	if len(contents) == 0 {
-		log(logging.Info, "schema is empty for %s, skipping", deets.Database)
+		log(logging.Info, nil, "schema is empty for %s, skipping", deets.Database)
 		return nil
 	}
 
@@ -193,12 +193,12 @@ func genericLoadSchema(d dialect, r io.Reader) error {
 		return fmt.Errorf("unable to load schema for %s: %w", deets.Database, err)
 	}
 
-	log(logging.Info, "loaded schema for %s", deets.Database)
+	log(logging.Info, nil, "loaded schema for %s", deets.Database)
 	return nil
 }
 
 func genericDumpSchema(deets *ConnectionDetails, cmd *exec.Cmd, w io.Writer) error {
-	log(logging.SQL, strings.Join(cmd.Args, " "))
+	log(logging.SQL, nil, strings.Join(cmd.Args, " "))
 
 	bb := &bytes.Buffer{}
 	mw := io.MultiWriter(w, bb)
@@ -216,6 +216,6 @@ func genericDumpSchema(deets *ConnectionDetails, cmd *exec.Cmd, w io.Writer) err
 		return fmt.Errorf("unable to dump schema for %s", deets.Database)
 	}
 
-	log(logging.Info, "dumped schema for %s", deets.Database)
+	log(logging.Info, nil, "dumped schema for %s", deets.Database)
 	return nil
 }

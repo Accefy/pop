@@ -68,7 +68,7 @@ func (p *cockroach) Details() *ConnectionDetails {
 	return p.ConnectionDetails
 }
 
-func (p *cockroach) Create(c *Connection, model *Model, cols columns.Columns) error {
+func (p *cockroach) Create(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns) error {
 	keyType, err := model.PrimaryKeyType()
 	if err != nil {
 		return err
@@ -83,7 +83,7 @@ func (p *cockroach) Create(c *Connection, model *Model, cols columns.Columns) er
 		} else {
 			query = fmt.Sprintf("INSERT INTO %s DEFAULT VALUES RETURNING %s", p.Quote(model.TableName()), model.IDField())
 		}
-		txlog(logging.SQL, c, query, model.Value)
+		txlog(logging.SQL, requestID, c, query, model.Value)
 		rows, err := c.Store.NamedQueryContext(model.ctx, query, model.Value)
 		if err != nil {
 			return fmt.Errorf("named insert: %w", err)
@@ -120,7 +120,7 @@ func (p *cockroach) Create(c *Connection, model *Model, cols columns.Columns) er
 			w.Add(model.IDField())
 			query = fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s) RETURNING %s", p.Quote(model.TableName()), w.QuotedString(p), w.SymbolizedString(), model.IDField())
 		}
-		txlog(logging.SQL, c, query, model.Value)
+		txlog(logging.SQL, requestID, c, query, model.Value)
 		rows, err := c.Store.NamedQueryContext(model.ctx, query, model.Value)
 		if err != nil {
 			return fmt.Errorf("named insert: %w", err)
@@ -142,33 +142,33 @@ func (p *cockroach) Create(c *Connection, model *Model, cols columns.Columns) er
 		model.setID(id)
 		return nil
 	}
-	return genericCreate(c, model, cols, p)
+	return genericCreate(c, requestID, model, cols, p)
 }
 
-func (p *cockroach) Update(c *Connection, model *Model, cols columns.Columns) error {
-	return genericUpdate(c, model, cols, p)
+func (p *cockroach) Update(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns) error {
+	return genericUpdate(c, requestID, model, cols, p)
 }
 
-func (p *cockroach) UpdateQuery(c *Connection, model *Model, cols columns.Columns, query Query) (int64, error) {
-	return genericUpdateQuery(c, model, cols, p, query, sqlx.DOLLAR)
+func (p *cockroach) UpdateQuery(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns, query Query) (int64, error) {
+	return genericUpdateQuery(c, requestID, model, cols, p, query, sqlx.DOLLAR)
 }
 
-func (p *cockroach) Destroy(c *Connection, model *Model) error {
+func (p *cockroach) Destroy(c *Connection, requestID *uuid.UUID, model *Model) error {
 	stmt := p.TranslateSQL(fmt.Sprintf("DELETE FROM %s AS %s WHERE %s", p.Quote(model.TableName()), model.Alias(), model.WhereID()))
-	_, err := genericExec(c, stmt, model.ID())
+	_, err := genericExec(c, requestID, stmt, model.ID())
 	return err
 }
 
-func (p *cockroach) Delete(c *Connection, model *Model, query Query) error {
-	return genericDelete(c, model, query)
+func (p *cockroach) Delete(c *Connection, requestID *uuid.UUID, model *Model, query Query) error {
+	return genericDelete(c, requestID, model, query)
 }
 
-func (p *cockroach) SelectOne(c *Connection, model *Model, query Query) error {
-	return genericSelectOne(c, model, query)
+func (p *cockroach) SelectOne(c *Connection, requestID *uuid.UUID, model *Model, query Query) error {
+	return genericSelectOne(c, requestID, model, query)
 }
 
-func (p *cockroach) SelectMany(c *Connection, models *Model, query Query) error {
-	return genericSelectMany(c, models, query)
+func (p *cockroach) SelectMany(c *Connection, requestID *uuid.UUID, models *Model, query Query) error {
+	return genericSelectMany(c, requestID, models, query)
 }
 
 func (p *cockroach) CreateDB() error {
@@ -181,14 +181,14 @@ func (p *cockroach) CreateDB() error {
 	}
 	defer db.Close()
 	query := fmt.Sprintf("CREATE DATABASE %s", p.Quote(deets.Database))
-	log(logging.SQL, query)
+	log(logging.SQL, nil, query)
 
 	_, err = db.Exec(query)
 	if err != nil {
 		return fmt.Errorf("error creating Cockroach database %s: %w", deets.Database, err)
 	}
 
-	log(logging.Info, "created database %s", deets.Database)
+	log(logging.Info, nil, "created database %s", deets.Database)
 	return nil
 }
 
@@ -201,14 +201,14 @@ func (p *cockroach) DropDB() error {
 	}
 	defer db.Close()
 	query := fmt.Sprintf("DROP DATABASE %s CASCADE;", p.Quote(deets.Database))
-	log(logging.SQL, query)
+	log(logging.SQL, nil, query)
 
 	_, err = db.Exec(query)
 	if err != nil {
 		return fmt.Errorf("error dropping Cockroach database %s: %w", deets.Database, err)
 	}
 
-	log(logging.Info, "dropped database %s", deets.Database)
+	log(logging.Info, nil, "dropped database %s", deets.Database)
 	return nil
 }
 
@@ -259,7 +259,7 @@ func (p *cockroach) DumpSchema(w io.Writer) error {
 }
 
 func cockroachDumpSchema(deets *ConnectionDetails, cmd *exec.Cmd, w io.Writer) error {
-	log(logging.SQL, strings.Join(cmd.Args, " "))
+	log(logging.SQL, nil, strings.Join(cmd.Args, " "))
 
 	var bb bytes.Buffer
 
@@ -283,7 +283,7 @@ func cockroachDumpSchema(deets *ConnectionDetails, cmd *exec.Cmd, w io.Writer) e
 		return fmt.Errorf("unable to dump schema for %s", deets.Database)
 	}
 
-	log(logging.Info, "dumped schema for %s", deets.Database)
+	log(logging.Info, nil, "dumped schema for %s", deets.Database)
 	return nil
 }
 
@@ -299,7 +299,7 @@ func (p *cockroach) TruncateAll(tx *Connection) error {
 	tableQuery := p.tablesQuery()
 
 	var tables []table
-	if err := tx.RawQuery(tableQuery, tx.MigrationTableName(), tx.Dialect.Details().Database).All(&tables); err != nil {
+	if err := tx.RawQuery(tableQuery, tx.MigrationTableName(), tx.Dialect.Details().Database).All(nil, &tables); err != nil {
 		return err
 	}
 
@@ -313,17 +313,17 @@ func (p *cockroach) TruncateAll(tx *Connection) error {
 		//! work around for current limitation of DDL and DML at the same transaction.
 		//  it should be fixed when cockroach support it or with other approach.
 		//  https://www.cockroachlabs.com/docs/stable/known-limitations.html#schema-changes-within-transactions
-		if err := tx.RawQuery(fmt.Sprintf("delete from %s", p.Quote(t.TableName))).Exec(); err != nil {
+		if err := tx.RawQuery(fmt.Sprintf("delete from %s", p.Quote(t.TableName))).Exec(nil); err != nil {
 			return err
 		}
 	}
 	return nil
 	// TODO!
-	// return tx3.RawQuery(fmt.Sprintf("truncate %s cascade;", strings.Join(tableNames, ", "))).Exec()
+	// return tx3.RawQuery(fmt.Sprintf("truncate %s cascade;", strings.Join(tableNames, ", "))).Exec(nil)
 }
 
 func (p *cockroach) AfterOpen(c *Connection) error {
-	if err := c.RawQuery(`select version() AS "version"`).First(&p.info); err != nil {
+	if err := c.RawQuery(`select version() AS "version"`).First(nil, &p.info); err != nil {
 		return err
 	}
 	if s := strings.Split(p.info.VersionString, " "); len(s) > 3 {
@@ -332,7 +332,7 @@ func (p *cockroach) AfterOpen(c *Connection) error {
 		p.info.version = s[2]
 		p.info.buildInfo = s[3]
 	}
-	log(logging.Debug, "server: %v %v %v", p.info.product, p.info.license, p.info.version)
+	log(logging.Debug, nil, "server: %v %v %v", p.info.product, p.info.license, p.info.version)
 
 	return nil
 }

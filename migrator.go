@@ -51,7 +51,7 @@ func (m Migrator) UpLogOnly() error {
 		mtn := c.MigrationTableName()
 		mfs := m.UpMigrations
 		sort.Sort(mfs)
-		return c.Transaction(func(tx *Connection) error {
+		return c.Transaction(nil, func(tx *Connection) error {
 			for _, mi := range mfs.Migrations {
 				if !m.migrationIsCompatible(c.Dialect, mi) {
 					continue
@@ -98,7 +98,7 @@ func (m Migrator) UpTo(step int) (applied int, err error) {
 			if exists {
 				continue
 			}
-			err = c.Transaction(func(tx *Connection) error {
+			err = c.Transaction(nil, func(tx *Connection) error {
 				err := mi.Run(tx)
 				if err != nil {
 					return err
@@ -112,16 +112,16 @@ func (m Migrator) UpTo(step int) (applied int, err error) {
 			if err != nil {
 				return err
 			}
-			log(logging.Info, "> %s", mi.Name)
+			log(logging.Info, nil, "> %s", mi.Name)
 			applied++
 			if step > 0 && applied >= step {
 				break
 			}
 		}
 		if applied == 0 {
-			log(logging.Info, "Migrations already up to date, nothing to apply")
+			log(logging.Info, nil, "Migrations already up to date, nothing to apply")
 		} else {
-			log(logging.Info, "Successfully applied %d migrations.", applied)
+			log(logging.Info, nil, "Successfully applied %d migrations.", applied)
 		}
 		return nil
 	})
@@ -134,7 +134,7 @@ func (m Migrator) Down(step int) error {
 	c := m.Connection
 	return m.exec(func() error {
 		mtn := c.MigrationTableName()
-		count, err := c.Count(mtn)
+		count, err := c.Count(nil, mtn)
 		if err != nil {
 			return fmt.Errorf("migration down: unable count existing migration: %w", err)
 		}
@@ -159,12 +159,12 @@ func (m Migrator) Down(step int) error {
 			if !exists {
 				return fmt.Errorf("migration version %s does not exist", mi.Version)
 			}
-			err = c.Transaction(func(tx *Connection) error {
+			err = c.Transaction(nil, func(tx *Connection) error {
 				err := mi.Run(tx)
 				if err != nil {
 					return err
 				}
-				err = tx.RawQuery(fmt.Sprintf("delete from %s where version = ?", mtn), mi.Version).Exec()
+				err = tx.RawQuery(fmt.Sprintf("delete from %s where version = ?", mtn), mi.Version).Exec(nil)
 				if err != nil {
 					return fmt.Errorf("problem deleting migration version %s: %w", mi.Version, err)
 				}
@@ -174,7 +174,7 @@ func (m Migrator) Down(step int) error {
 				return err
 			}
 
-			log(logging.Info, "< %s", mi.Name)
+			log(logging.Info, nil, "< %s", mi.Name)
 		}
 		return nil
 	})
@@ -202,13 +202,13 @@ func CreateSchemaMigrations(c *Connection) error {
 		return nil
 	}
 
-	return c.Transaction(func(tx *Connection) error {
+	return c.Transaction(nil, func(tx *Connection) error {
 		schemaMigrations := newSchemaMigrations(mtn)
 		smSQL, err := c.Dialect.FizzTranslator().CreateTable(schemaMigrations)
 		if err != nil {
 			return fmt.Errorf("could not build SQL for schema migration table: %w", err)
 		}
-		err = tx.RawQuery(smSQL).Exec()
+		err = tx.RawQuery(smSQL).Exec(nil)
 		if err != nil {
 			return fmt.Errorf("could not execute %s: %w", smSQL, err)
 		}
@@ -269,7 +269,7 @@ func (m Migrator) exec(fn func() error) error {
 	defer func() {
 		err := m.DumpMigrationSchema()
 		if err != nil {
-			log(logging.Warn, "Migrator: unable to dump schema: %v", err)
+			log(logging.Warn, nil, "Migrator: unable to dump schema: %v", err)
 		}
 	}()
 	defer printTimer(now)
@@ -284,8 +284,8 @@ func (m Migrator) exec(fn func() error) error {
 func printTimer(timerStart time.Time) {
 	diff := time.Since(timerStart).Seconds()
 	if diff > 60 {
-		log(logging.Info, "%.4f minutes", diff/60)
+		log(logging.Info, nil, "%.4f minutes", diff/60)
 	} else {
-		log(logging.Info, "%.4f seconds", diff)
+		log(logging.Info, nil, "%.4f seconds", diff)
 	}
 }

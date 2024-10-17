@@ -14,7 +14,7 @@ func Benchmark_Create_Pop(b *testing.B) {
 			u := &User{
 				Name: nulls.NewString("Mark Bates"),
 			}
-			tx.Create(u)
+			tx.Create(nil, u)
 		}
 	})
 }
@@ -36,9 +36,9 @@ func Benchmark_Update(b *testing.B) {
 		u := &User{
 			Name: nulls.NewString("Mark Bates"),
 		}
-		tx.Create(u)
+		tx.Create(nil, u)
 		for n := 0; n < b.N; n++ {
-			tx.Update(u)
+			tx.Update(nil, u)
 		}
 	})
 }
@@ -48,9 +48,9 @@ func Benchmark_Find_Pop(b *testing.B) {
 		u := &User{
 			Name: nulls.NewString("Mark Bates"),
 		}
-		tx.Create(u)
+		tx.Create(nil, u)
 		for n := 0; n < b.N; n++ {
-			tx.Find(u, u.ID)
+			tx.Find(nil, u, u.ID)
 		}
 	})
 }
@@ -60,7 +60,7 @@ func Benchmark_Find_Raw(b *testing.B) {
 		u := &User{
 			Name: nulls.NewString("Mark Bates"),
 		}
-		tx.Create(u)
+		tx.Create(nil, u)
 		for n := 0; n < b.N; n++ {
 			tx.Store.Get(u, "select * from users where id = ?", u.ID)
 		}

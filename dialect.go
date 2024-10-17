@@ -5,16 +5,17 @@ import (
 
 	"github.com/gobuffalo/fizz"
 	"github.com/gobuffalo/pop/v6/columns"
+	"github.com/gofrs/uuid"
 )
 
 type crudable interface {
-	SelectOne(*Connection, *Model, Query) error
-	SelectMany(*Connection, *Model, Query) error
-	Create(*Connection, *Model, columns.Columns) error
-	Update(*Connection, *Model, columns.Columns) error
-	UpdateQuery(*Connection, *Model, columns.Columns, Query) (int64, error)
-	Destroy(*Connection, *Model) error
-	Delete(*Connection, *Model, Query) error
+	SelectOne(*Connection, *uuid.UUID, *Model, Query) error
+	SelectMany(*Connection, *uuid.UUID, *Model, Query) error
+	Create(*Connection, *uuid.UUID, *Model, columns.Columns) error
+	Update(*Connection, *uuid.UUID, *Model, columns.Columns) error
+	UpdateQuery(*Connection, *uuid.UUID, *Model, columns.Columns, Query) (int64, error)
+	Destroy(*Connection, *uuid.UUID, *Model) error
+	Delete(*Connection, *uuid.UUID, *Model, Query) error
 }
 
 type fizzable interface {

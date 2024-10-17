@@ -7,6 +7,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/gobuffalo/pop/v6/logging"
+	"github.com/gofrs/uuid"
 )
 
 // Debug mode, to toggle verbose log traces
@@ -16,22 +17,22 @@ var Debug = false
 var Color = true
 
 // SetLogger overrides the default logger.
-func SetLogger(logger func(level logging.Level, s string, args ...interface{})) {
+func SetLogger(logger func(level logging.Level, requestID *uuid.UUID, s string, args ...interface{})) {
 	log = logger
 }
 
 // SetLogger overrides the default logger.
-func SetTxLogger(logger func(level logging.Level, anon interface{}, s string, args ...interface{})) {
+func SetTxLogger(logger func(level logging.Level, requestID *uuid.UUID, anon interface{}, s string, args ...interface{})) {
 	txlog = logger
 }
 
 var defaultStdLogger = stdlog.New(os.Stderr, "[POP] ", stdlog.LstdFlags)
 
-var log = func(lvl logging.Level, s string, args ...interface{}) {
-	txlog(lvl, nil, s, args...)
+var log = func(lvl logging.Level, requestID *uuid.UUID, s string, args ...interface{}) {
+	txlog(lvl, requestID, nil, s, args...)
 }
 
-var txlog = func(lvl logging.Level, anon interface{}, s string, args ...interface{}) {
+var txlog = func(lvl logging.Level, requestID *uuid.UUID, anon interface{}, s string, args ...interface{}) {
 	if !Debug && lvl <= logging.Debug {
 		return
 	}

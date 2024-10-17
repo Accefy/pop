@@ -18,7 +18,7 @@ func Test_IsZeroOfUnderlyingType(t *testing.T) {
 	transaction(func(tx *Connection) {
 		car := &ValidatableCar{Name: "VW"}
 		r.True(IsZeroOfUnderlyingType(car.ID))
-		err := tx.Save(car)
+		err := tx.Save(nil, car)
 		r.NoError(err)
 		r.NotZero(car.ID)
 		r.NotZero(car.CreatedAt)
@@ -51,7 +51,7 @@ func Test_ValidateAndSave(t *testing.T) {
 	validationLogs = []string{}
 	transaction(func(tx *Connection) {
 		car := &ValidatableCar{Name: "VW"}
-		verrs, err := tx.ValidateAndSave(car)
+		verrs, err := tx.ValidateAndSave(nil, car)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 2)
@@ -61,7 +61,7 @@ func Test_ValidateAndSave(t *testing.T) {
 
 		validationLogs = []string{}
 		car = &ValidatableCar{Name: ""}
-		verrs, err = tx.ValidateAndSave(car)
+		verrs, err = tx.ValidateAndSave(nil, car)
 		r.NoError(err)
 		r.True(verrs.HasAny())
 		r.Len(validationLogs, 2)
@@ -70,7 +70,7 @@ func Test_ValidateAndSave(t *testing.T) {
 
 		validationLogs = []string{}
 		ncar := &NotValidatableCar{Name: ""}
-		verrs, err = tx.ValidateAndSave(ncar)
+		verrs, err = tx.ValidateAndSave(nil, ncar)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 0)
@@ -88,7 +88,7 @@ func Test_ValidateAndSave_With_Slice(t *testing.T) {
 			{Name: "VW"},
 			{Name: "AU"},
 		}
-		verrs, err := tx.ValidateAndSave(&car)
+		verrs, err := tx.ValidateAndSave(nil, &car)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 4)
@@ -104,7 +104,7 @@ func Test_ValidateAndSave_With_Slice(t *testing.T) {
 			{Name: ""},
 			{Name: "AU"},
 		}
-		verrs, err = tx.ValidateAndSave(&car)
+		verrs, err = tx.ValidateAndSave(nil, &car)
 		r.NoError(err)
 		r.True(verrs.HasAny())
 		r.Len(validationLogs, 2)
@@ -116,7 +116,7 @@ func Test_ValidateAndSave_With_Slice(t *testing.T) {
 			{Name: ""},
 			{Name: "AU"},
 		}
-		verrs, err = tx.ValidateAndSave(&ncar)
+		verrs, err = tx.ValidateAndSave(nil, &ncar)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 0)
@@ -131,7 +131,7 @@ func Test_ValidateAndCreate(t *testing.T) {
 	validationLogs = []string{}
 	transaction(func(tx *Connection) {
 		car := &ValidatableCar{Name: "VW"}
-		verrs, err := tx.ValidateAndCreate(car)
+		verrs, err := tx.ValidateAndCreate(nil, car)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 2)
@@ -141,7 +141,7 @@ func Test_ValidateAndCreate(t *testing.T) {
 
 		validationLogs = []string{}
 		car = &ValidatableCar{Name: ""}
-		verrs, err = tx.ValidateAndSave(car)
+		verrs, err = tx.ValidateAndSave(nil, car)
 		r.NoError(err)
 		r.True(verrs.HasAny())
 		r.Len(validationLogs, 2)
@@ -150,7 +150,7 @@ func Test_ValidateAndCreate(t *testing.T) {
 
 		validationLogs = []string{}
 		ncar := &NotValidatableCar{Name: ""}
-		verrs, err = tx.ValidateAndCreate(ncar)
+		verrs, err = tx.ValidateAndCreate(nil, ncar)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 0)
@@ -165,7 +165,7 @@ func Test_Create_Single_Incremental_ID(t *testing.T) {
 	validationLogs = []string{}
 	transaction(func(tx *Connection) {
 		singleID := &SingleID{}
-		err := tx.Create(singleID)
+		err := tx.Create(nil, singleID)
 		r.NoError(err)
 		r.NotZero(singleID.ID)
 	})
@@ -182,7 +182,7 @@ func Test_ValidateAndCreate_With_Slice(t *testing.T) {
 			{Name: "VW"},
 			{Name: "AU"},
 		}
-		verrs, err := tx.ValidateAndCreate(&car)
+		verrs, err := tx.ValidateAndCreate(nil, &car)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 4)
@@ -197,7 +197,7 @@ func Test_ValidateAndCreate_With_Slice(t *testing.T) {
 			{Name: ""},
 			{Name: "AU"},
 		}
-		verrs, err = tx.ValidateAndSave(&car)
+		verrs, err = tx.ValidateAndSave(nil, &car)
 		r.NoError(err)
 		r.True(verrs.HasAny())
 		r.Len(validationLogs, 2)
@@ -209,7 +209,7 @@ func Test_ValidateAndCreate_With_Slice(t *testing.T) {
 			{Name: ""},
 			{Name: "AU"},
 		}
-		verrs, err = tx.ValidateAndCreate(ncar)
+		verrs, err = tx.ValidateAndCreate(nil, ncar)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 0)
@@ -224,7 +224,7 @@ func Test_ValidateAndUpdate(t *testing.T) {
 	validationLogs = []string{}
 	transaction(func(tx *Connection) {
 		car := &ValidatableCar{Name: "VW"}
-		verrs, err := tx.ValidateAndCreate(car)
+		verrs, err := tx.ValidateAndCreate(nil, car)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 2)
@@ -234,7 +234,7 @@ func Test_ValidateAndUpdate(t *testing.T) {
 
 		validationLogs = []string{}
 		car.Name = ""
-		verrs, err = tx.ValidateAndUpdate(car)
+		verrs, err = tx.ValidateAndUpdate(nil, car)
 		r.NoError(err)
 		r.True(verrs.HasAny())
 		r.Len(validationLogs, 2)
@@ -243,14 +243,14 @@ func Test_ValidateAndUpdate(t *testing.T) {
 
 		validationLogs = []string{}
 		ncar := &NotValidatableCar{Name: ""}
-		verrs, err = tx.ValidateAndCreate(ncar)
+		verrs, err = tx.ValidateAndCreate(nil, ncar)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 0)
 
 		validationLogs = []string{}
 		ncar.Name = ""
-		verrs, err = tx.ValidateAndUpdate(ncar)
+		verrs, err = tx.ValidateAndUpdate(nil, ncar)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 0)
@@ -268,7 +268,7 @@ func Test_ValidateAndUpdate_With_Slice(t *testing.T) {
 			{Name: "VW"},
 			{Name: "AU"},
 		}
-		verrs, err := tx.ValidateAndCreate(&car)
+		verrs, err := tx.ValidateAndCreate(nil, &car)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 4)
@@ -280,7 +280,7 @@ func Test_ValidateAndUpdate_With_Slice(t *testing.T) {
 
 		validationLogs = []string{}
 		car[0].Name = ""
-		verrs, err = tx.ValidateAndUpdate(&car)
+		verrs, err = tx.ValidateAndUpdate(nil, &car)
 		r.NoError(err)
 		r.True(verrs.HasAny())
 		r.Len(validationLogs, 2)
@@ -292,14 +292,14 @@ func Test_ValidateAndUpdate_With_Slice(t *testing.T) {
 			{Name: ""},
 			{Name: "AU"},
 		}
-		verrs, err = tx.ValidateAndCreate(&ncar)
+		verrs, err = tx.ValidateAndCreate(nil, &ncar)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 0)
 
 		validationLogs = []string{}
 		ncar[1].Name = ""
-		verrs, err = tx.ValidateAndUpdate(&ncar)
+		verrs, err = tx.ValidateAndUpdate(nil, &ncar)
 		r.NoError(err)
 		r.False(verrs.HasAny())
 		r.Len(validationLogs, 0)
@@ -314,16 +314,16 @@ func Test_Exec(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark 'Awesome' Bates")}
-		r.NoError(tx.Create(&user))
+		r.NoError(tx.Create(nil, &user))
 
-		ctx, _ := tx.Count(user)
+		ctx, _ := tx.Count(nil, user)
 		r.Equal(1, ctx)
 
 		q := tx.RawQuery("delete from users where id = ?", user.ID)
-		err := q.Exec()
+		err := q.Exec(nil, )
 		r.NoError(err)
 
-		ctx, _ = tx.Count(user)
+		ctx, _ = tx.Count(nil, user)
 		r.Equal(0, ctx)
 	})
 }
@@ -336,18 +336,18 @@ func Test_ExecCount(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark 'Awesome' Bates")}
-		tx.Create(&user)
+		tx.Create(nil, &user)
 
-		ctx, _ := tx.Count(user)
+		ctx, _ := tx.Count(nil, user)
 		r.Equal(1, ctx)
 
 		q := tx.RawQuery("delete from users where id = ?", user.ID)
-		count, err := q.ExecWithCount()
+		count, err := q.ExecWithCount(nil, )
 		r.NoError(err)
 
 		r.Equal(1, count)
 
-		ctx, _ = tx.Count(user)
+		ctx, _ = tx.Count(nil, user)
 		r.Equal(0, ctx)
 	})
 }
@@ -360,12 +360,12 @@ func Test_Save(t *testing.T) {
 	transaction(func(tx *Connection) {
 		u := &User{Name: nulls.NewString("Mark")}
 		r.Zero(u.ID)
-		r.NoError(tx.Save(u))
+		r.NoError(tx.Save(nil, u))
 		r.NotZero(u.ID)
 
 		uat := u.UpdatedAt.UnixNano()
 
-		r.NoError(tx.Save(u))
+		r.NoError(tx.Save(nil, u))
 		time.Sleep(1 * time.Second)
 		r.NotEqual(uat, u.UpdatedAt.UnixNano())
 	})
@@ -384,13 +384,13 @@ func Test_Save_With_Slice(t *testing.T) {
 		r.Zero(u[0].ID)
 		r.Zero(u[1].ID)
 
-		r.NoError(tx.Save(&u))
+		r.NoError(tx.Save(nil, &u))
 		r.NotZero(u[0].ID)
 		r.NotZero(u[1].ID)
 
 		uat := u[0].UpdatedAt.UnixNano()
 
-		r.NoError(tx.Save(u))
+		r.NoError(tx.Save(nil, u))
 		r.NotEqual(uat, u[0].UpdatedAt.UnixNano())
 	})
 }
@@ -402,18 +402,18 @@ func Test_Create(t *testing.T) {
 	transaction(func(tx *Connection) {
 		r := require.New(t)
 
-		count, _ := tx.Count(&User{})
+		count, _ := tx.Count(nil, &User{})
 		user := User{Name: nulls.NewString("Mark 'Awesome' Bates")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 		r.NotEqual(0, user.ID)
 
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Equal(count+1, ctx)
 
 		u := User{}
 		q := tx.Where("name = ?", "Mark 'Awesome' Bates")
-		err = q.First(&u)
+		err = q.First(nil, &u)
 		r.NoError(err)
 		r.Equal("Mark 'Awesome' Bates", user.Name.String)
 	})
@@ -426,19 +426,19 @@ func Test_Create_stringID(t *testing.T) {
 	transaction(func(tx *Connection) {
 		r := require.New(t)
 
-		count, err := tx.Count(&Label{})
+		count, err := tx.Count(nil, &Label{})
 		r.NoError(err)
 		label := Label{ID: "red"}
-		err = tx.Create(&label)
+		err = tx.Create(nil, &label)
 		r.NoError(err)
 		r.Equal("red", label.ID)
 
-		ctx, err := tx.Count(&Label{})
+		ctx, err := tx.Count(nil, &Label{})
 		r.NoError(err)
 		r.Equal(count+1, ctx)
 
 		l := Label{}
-		err = tx.Find(&l, "red")
+		err = tx.Find(nil, &l, "red")
 		r.NoError(err)
 		r.Equal("red", l.ID)
 	})
@@ -451,16 +451,16 @@ func Test_Create_With_Slice(t *testing.T) {
 	transaction(func(tx *Connection) {
 		r := require.New(t)
 
-		count, _ := tx.Count(&User{})
+		count, _ := tx.Count(nil, &User{})
 		users := Users{
 			{Name: nulls.NewString("Mark Bates")},
 			{Name: nulls.NewString("Larry M. Jordan")},
 			{Name: nulls.NewString("Pop")},
 		}
-		err := tx.Create(&users)
+		err := tx.Create(nil, &users)
 		r.NoError(err)
 
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Equal(count+3, ctx)
 	})
 }
@@ -472,16 +472,16 @@ func Test_Create_With_Non_ID_PK(t *testing.T) {
 	transaction(func(tx *Connection) {
 		r := require.New(t)
 
-		count, _ := tx.Count(&CrookedColour{})
+		count, _ := tx.Count(nil, &CrookedColour{})
 		djs := []CrookedColour{
 			{Name: "Phil Slabber"},
 			{Name: "Leon Debaughn"},
 			{Name: "Liam Merrett-Park"},
 		}
-		err := tx.Create(&djs)
+		err := tx.Create(nil, &djs)
 		r.NoError(err)
 
-		ctx, _ := tx.Count(&CrookedColour{})
+		ctx, _ := tx.Count(nil, &CrookedColour{})
 		r.Equal(count+3, ctx)
 		r.NotEqual(djs[0].ID, djs[1].ID)
 		r.NotEqual(djs[1].ID, djs[2].ID)
@@ -495,16 +495,16 @@ func Test_Create_With_Non_ID_PK_String(t *testing.T) {
 	transaction(func(tx *Connection) {
 		r := require.New(t)
 
-		count, _ := tx.Count(&CrookedSong{})
+		count, _ := tx.Count(nil, &CrookedSong{})
 		djs := []CrookedSong{
 			{ID: "Flow"},
 			{ID: "Do It Like You"},
 			{ID: "I C Light"},
 		}
-		err := tx.Create(&djs)
+		err := tx.Create(nil, &djs)
 		r.NoError(err)
 
-		ctx, _ := tx.Count(&CrookedSong{})
+		ctx, _ := tx.Count(nil, &CrookedSong{})
 		r.Equal(count+3, ctx)
 		r.NotEqual(djs[0].ID, djs[1].ID)
 		r.NotEqual(djs[1].ID, djs[2].ID)
@@ -518,16 +518,16 @@ func Test_Create_Non_PK_ID(t *testing.T) {
 	transaction(func(tx *Connection) {
 		r := require.New(t)
 
-		r.NoError(tx.Create(&NonStandardID{OutfacingID: "make sure the tested entry does not have pk=0"}))
+		r.NoError(tx.Create(nil, &NonStandardID{OutfacingID: "make sure the tested entry does not have pk=0"}))
 
-		count, err := tx.Count(&NonStandardID{})
+		count, err := tx.Count(nil, &NonStandardID{})
 		r.NoError(err)
 		entry := &NonStandardID{
 			OutfacingID: "beautiful to the outside ID",
 		}
-		r.NoError(tx.Create(entry))
+		r.NoError(tx.Create(nil, entry))
 
-		ctx, err := tx.Count(&NonStandardID{})
+		ctx, err := tx.Count(nil, &NonStandardID{})
 		r.NoError(err)
 		r.Equal(count+1, ctx)
 		r.NotZero(entry.ID)
@@ -542,7 +542,7 @@ func Test_Create_Parallel(t *testing.T) {
 		i := i
 		t.Run(fmt.Sprintf("case=%d", i), func(t *testing.T) {
 			t.Parallel()
-			require.NoError(t, PDB.Create(&CrookedColour{Name: fmt.Sprintf("Singer %d", i)}))
+			require.NoError(t, PDB.Create(nil, &CrookedColour{Name: fmt.Sprintf("Singer %d", i)}))
 		})
 	}
 }
@@ -558,26 +558,26 @@ func Test_Embedded_Struct(t *testing.T) {
 			InnerStruct:     InnerStruct{},
 			AdditionalField: "I am also important!",
 		}
-		r.NoError(tx.Create(entry))
+		r.NoError(tx.Create(nil, entry))
 
 		var actual EmbeddingStruct
-		r.NoError(tx.Find(&actual, entry.ID))
+		r.NoError(tx.Find(nil, &actual, entry.ID))
 		r.Equal(entry.AdditionalField, actual.AdditionalField)
 
 		entry.AdditionalField = entry.AdditionalField + " updated"
-		r.NoError(tx.Update(entry))
+		r.NoError(tx.Update(nil, entry))
 
-		r.NoError(tx.Find(&actual, entry.ID))
+		r.NoError(tx.Find(nil, &actual, entry.ID))
 		r.Equal(entry.AdditionalField, actual.AdditionalField)
 
 		entry.AdditionalField = entry.AdditionalField + "; updated again"
-		count, err := tx.Where("id = ?", entry.ID).UpdateQuery(entry, "additional_field")
+		count, err := tx.Where("id = ?", entry.ID).UpdateQuery(nil, entry, "additional_field")
 		r.NoError(err)
 		require.Equal(t, int64(1), count)
-		r.NoError(tx.Find(&actual, entry.ID))
+		r.NoError(tx.Find(nil, &actual, entry.ID))
 		r.Equal(entry.AdditionalField, actual.AdditionalField)
 
-		r.NoError(tx.Destroy(entry))
+		r.NoError(tx.Destroy(nil, entry))
 	})
 }
 
@@ -587,7 +587,7 @@ func Test_Eager_Create_Has_Many(t *testing.T) {
 	}
 	transaction(func(tx *Connection) {
 		r := require.New(t)
-		count, _ := tx.Count(&User{})
+		count, _ := tx.Count(nil, &User{})
 		user := User{
 			Name:         nulls.NewString("Mark 'Awesome' Bates"),
 			Books:        Books{{Title: "Pop Book", Description: "Pop Book", Isbn: "PB1"}},
@@ -597,25 +597,25 @@ func Test_Eager_Create_Has_Many(t *testing.T) {
 			},
 		}
 
-		err := tx.Eager().Create(&user)
+		err := tx.Eager().Create(nil, &user)
 		r.NoError(err)
 		r.NotEqual(user.ID, 0)
 
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Book{})
+		ctx, _ = tx.Count(nil, &Book{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Song{})
+		ctx, _ = tx.Count(nil, &Song{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Address{})
+		ctx, _ = tx.Count(nil, &Address{})
 		r.Equal(count+1, ctx)
 
 		u := User{}
 		q := tx.Eager().Where("name = ?", "Mark 'Awesome' Bates")
-		err = q.First(&u)
+		err = q.First(nil, &u)
 		r.NoError(err)
 		r.Equal(u.Name.String, "Mark 'Awesome' Bates")
 		r.Equal(1, len(u.Books))
@@ -634,14 +634,14 @@ func Test_Eager_Create_Has_Many_With_Existing(t *testing.T) {
 		r := require.New(t)
 
 		addr := Address{HouseNumber: 42, Street: "Life"}
-		addrVerrs, addrErr := tx.ValidateAndCreate(&addr)
+		addrVerrs, addrErr := tx.ValidateAndCreate(nil, &addr)
 		r.NoError(addrErr)
-		addrCount, _ := tx.Count(&Address{})
+		addrCount, _ := tx.Count(nil, &Address{})
 		r.Zero(addrVerrs.Count())
 		r.Equal(1, addrCount)
 		r.NotZero(addr.ID)
 
-		count, _ := tx.Count(&User{})
+		count, _ := tx.Count(nil, &User{})
 		user := User{
 			Name:         nulls.NewString("Mark 'Awesome' Bates"),
 			Books:        Books{{Title: "Pop Book", Description: "Pop Book", Isbn: "PB1"}},
@@ -652,25 +652,25 @@ func Test_Eager_Create_Has_Many_With_Existing(t *testing.T) {
 			},
 		}
 
-		err := tx.Eager().Create(&user)
+		err := tx.Eager().Create(nil, &user)
 		r.NoError(err)
 		r.NotEqual(user.ID, 0)
 
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Book{})
+		ctx, _ = tx.Count(nil, &Book{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Song{})
+		ctx, _ = tx.Count(nil, &Song{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Address{})
+		ctx, _ = tx.Count(nil, &Address{})
 		r.Equal(addrCount+1, ctx)
 
 		u := User{}
 		q := tx.Eager().Where("name = ?", "Mark 'Awesome' Bates")
-		err = q.First(&u)
+		err = q.First(nil, &u)
 		r.NoError(err)
 		r.Equal(u.Name.String, "Mark 'Awesome' Bates")
 		r.Equal(1, len(u.Books))
@@ -693,24 +693,24 @@ func Test_Eager_Create_Has_Many_Reset_Eager_Mode_Connection(t *testing.T) {
 	}
 	transaction(func(tx *Connection) {
 		r := require.New(t)
-		count, _ := tx.Count(&User{})
+		count, _ := tx.Count(nil, &User{})
 		user1 := User{
 			Name:  nulls.NewString("Mark 'Awesome' Bates"),
 			Books: Books{{Title: "Pop Book", Description: "Pop Book", Isbn: "PB1"}},
 		}
 
-		err := tx.Eager("Books").Create(&user1)
+		err := tx.Eager("Books").Create(nil, &user1)
 		r.NoError(err)
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Equal(count+1, ctx)
-		ctx, _ = tx.Count(&Book{})
+		ctx, _ = tx.Count(nil, &Book{})
 		r.Equal(count+1, ctx)
 
 		book := Book{Title: "Pop Book", Description: "Pop Book", Isbn: "PB1"}
 
-		err = tx.Eager().Create(&book)
+		err = tx.Eager().Create(nil, &book)
 		r.NoError(err)
-		ctx, _ = tx.Count(&Book{})
+		ctx, _ = tx.Count(nil, &Book{})
 		r.Equal(count+2, ctx)
 	})
 }
@@ -730,9 +730,9 @@ func Test_Eager_Validate_And_Create_Has_Many(t *testing.T) {
 			},
 		}
 
-		verrs, err := tx.Eager().ValidateAndCreate(&user)
+		verrs, err := tx.Eager().ValidateAndCreate(nil, &user)
 		r.NoError(err)
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Zero(ctx)
 		r.Equal(1, verrs.Count()) // Missing Books.Description.
 	})
@@ -753,9 +753,9 @@ func Test_Eager_Validate_And_Create_Parental(t *testing.T) {
 			},
 		}
 
-		verrs, err := tx.Eager().ValidateAndCreate(&user)
+		verrs, err := tx.Eager().ValidateAndCreate(nil, &user)
 		r.NoError(err)
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Zero(ctx)
 		r.Equal(1, verrs.Count()) // Missing Books.Description.
 	})
@@ -768,14 +768,14 @@ func Test_Eager_Validate_And_Create_Parental_With_Existing(t *testing.T) {
 	r := require.New(t)
 	transaction(func(tx *Connection) {
 		addr := Address{HouseNumber: 42, Street: "Life"}
-		addrVerrs, addrErr := tx.ValidateAndCreate(&addr)
+		addrVerrs, addrErr := tx.ValidateAndCreate(nil, &addr)
 		r.NoError(addrErr)
-		addrCount, _ := tx.Count(&Address{})
+		addrCount, _ := tx.Count(nil, &Address{})
 		r.Zero(addrVerrs.Count())
 		r.Equal(1, addrCount)
 		r.NotZero(addr.ID)
 
-		m2mCount, m2mErr := tx.Count(&UsersAddress{})
+		m2mCount, m2mErr := tx.Count(nil, &UsersAddress{})
 		r.NoError(m2mErr)
 		r.Zero(m2mCount)
 
@@ -788,26 +788,26 @@ func Test_Eager_Validate_And_Create_Parental_With_Existing(t *testing.T) {
 				addr,
 			},
 		}
-		count, _ := tx.Count(&User{})
+		count, _ := tx.Count(nil, &User{})
 
-		verrs, err := tx.Eager().ValidateAndCreate(&user)
+		verrs, err := tx.Eager().ValidateAndCreate(nil, &user)
 		r.NoError(err)
 		r.NotEqual(user.ID, 0)
 		r.Equal(0, verrs.Count())
 
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Address{})
+		ctx, _ = tx.Count(nil, &Address{})
 		r.Equal(addrCount+1, ctx)
 
-		m2mCount, m2mErr = tx.Count(&UsersAddress{})
+		m2mCount, m2mErr = tx.Count(nil, &UsersAddress{})
 		r.NoError(m2mErr)
 		r.Equal(2, m2mCount)
 
 		u := User{}
 		q := tx.Eager().Where("name = ?", "Mark 'Awesome' Bates")
-		err = q.First(&u)
+		err = q.First(nil, &u)
 		r.NoError(err)
 		r.Equal(u.Name.String, "Mark 'Awesome' Bates")
 		r.Equal(1, len(u.Books))
@@ -832,14 +832,14 @@ func Test_Eager_Validate_And_Create_Parental_With_Partial_Existing(t *testing.T)
 	r := require.New(t)
 	transaction(func(tx *Connection) {
 		addr := Address{HouseNumber: 42, Street: "Life"}
-		addrVerrs, addrErr := tx.ValidateAndCreate(&addr)
+		addrVerrs, addrErr := tx.ValidateAndCreate(nil, &addr)
 		r.NoError(addrErr)
-		addrCount, _ := tx.Count(&Address{})
+		addrCount, _ := tx.Count(nil, &Address{})
 		r.Zero(addrVerrs.Count())
 		r.Equal(1, addrCount)
 		r.NotZero(addr.ID)
 
-		m2mCount, m2mErr := tx.Count(&UsersAddress{})
+		m2mCount, m2mErr := tx.Count(nil, &UsersAddress{})
 		r.NoError(m2mErr)
 		r.Zero(m2mCount)
 
@@ -852,26 +852,26 @@ func Test_Eager_Validate_And_Create_Parental_With_Partial_Existing(t *testing.T)
 				Address{ID: addr.ID},
 			},
 		}
-		count, _ := tx.Count(&User{})
+		count, _ := tx.Count(nil, &User{})
 
-		verrs, err := tx.Eager().ValidateAndCreate(&user)
+		verrs, err := tx.Eager().ValidateAndCreate(nil, &user)
 		r.NoError(err)
 		r.NotEqual(user.ID, 0)
 		r.Equal(0, verrs.Count())
 
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Address{})
+		ctx, _ = tx.Count(nil, &Address{})
 		r.Equal(addrCount+1, ctx)
 
-		m2mCount, m2mErr = tx.Count(&UsersAddress{})
+		m2mCount, m2mErr = tx.Count(nil, &UsersAddress{})
 		r.NoError(m2mErr)
 		r.Equal(2, m2mCount)
 
 		u := User{}
 		q := tx.Eager().Where("name = ?", "Mark 'Awesome' Bates")
-		err = q.First(&u)
+		err = q.First(nil, &u)
 		r.NoError(err)
 		r.Equal(u.Name.String, "Mark 'Awesome' Bates")
 		r.Equal(1, len(u.Books))
@@ -896,37 +896,37 @@ func Test_Flat_Validate_And_Create_Parental_With_Existing(t *testing.T) {
 	r := require.New(t)
 	transaction(func(tx *Connection) {
 		addr := Address{HouseNumber: 42, Street: "Life"}
-		addrVerrs, addrErr := tx.ValidateAndCreate(&addr)
+		addrVerrs, addrErr := tx.ValidateAndCreate(nil, &addr)
 		r.NoError(addrErr)
-		addrCount, _ := tx.Count(&Address{})
+		addrCount, _ := tx.Count(nil, &Address{})
 		r.Zero(addrVerrs.Count())
 		r.Equal(1, addrCount)
 		r.NotZero(addr.ID)
 
 		book := Book{Title: "Pop Book", Isbn: "PB1", Description: "Awesome Book!"}
-		bookVerrs, bookErr := tx.ValidateAndCreate(&book)
+		bookVerrs, bookErr := tx.ValidateAndCreate(nil, &book)
 		r.NoError(bookErr)
 		r.Zero(bookVerrs.Count())
 		r.NotZero(book.ID)
 
 		book2 := Book{Title: "Pop Book2", Isbn: "PB2", Description: "Awesome Book Also!"}
-		bookVerrs, bookErr = tx.ValidateAndCreate(&book2)
+		bookVerrs, bookErr = tx.ValidateAndCreate(nil, &book2)
 		r.NoError(bookErr)
 		r.Zero(bookVerrs.Count())
 		r.NotZero(book2.ID)
 
-		bookCount, _ := tx.Count(&Book{})
+		bookCount, _ := tx.Count(nil, &Book{})
 		r.Equal(2, bookCount)
 
 		song := Song{Title: "Hook - Blues Traveler"}
-		songVerrs, songErr := tx.ValidateAndCreate(&song)
+		songVerrs, songErr := tx.ValidateAndCreate(nil, &song)
 		r.NoError(songErr)
-		songCount, _ := tx.Count(&Song{})
+		songCount, _ := tx.Count(nil, &Song{})
 		r.Zero(songVerrs.Count())
 		r.Equal(1, songCount)
 		r.NotZero(song.ID)
 
-		m2mCount, m2mErr := tx.Count(&UsersAddress{})
+		m2mCount, m2mErr := tx.Count(nil, &UsersAddress{})
 		r.NoError(m2mErr)
 		r.Zero(m2mCount)
 
@@ -939,32 +939,32 @@ func Test_Flat_Validate_And_Create_Parental_With_Existing(t *testing.T) {
 				addr,
 			},
 		}
-		count, _ := tx.Count(&User{})
+		count, _ := tx.Count(nil, &User{})
 
-		verrs, err := tx.ValidateAndCreate(&user)
+		verrs, err := tx.ValidateAndCreate(nil, &user)
 		r.NoError(err)
 		r.NotEqual(user.ID, 0)
 		r.Equal(0, verrs.Count())
 
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Address{})
+		ctx, _ = tx.Count(nil, &Address{})
 		r.Equal(addrCount, ctx)
 
-		ctx, _ = tx.Count(&Book{})
+		ctx, _ = tx.Count(nil, &Book{})
 		r.Equal(bookCount, ctx)
 
-		ctx, _ = tx.Count(&Song{})
+		ctx, _ = tx.Count(nil, &Song{})
 		r.Equal(songCount, ctx)
 
-		m2mCount, m2mErr = tx.Count(&UsersAddress{})
+		m2mCount, m2mErr = tx.Count(nil, &UsersAddress{})
 		r.NoError(m2mErr)
 		r.Equal(1, m2mCount)
 
 		u := User{}
 		q := tx.Eager().Where("name = ?", "Mark 'Awesome' Bates")
-		err = q.First(&u)
+		err = q.First(nil, &u)
 		r.NoError(err)
 		r.Equal(u.Name.String, "Mark 'Awesome' Bates")
 		r.Equal(2, len(u.Books))
@@ -989,30 +989,30 @@ func Test_Flat_Validate_And_Create_Parental_With_Partial_Existing(t *testing.T) 
 	r := require.New(t)
 	transaction(func(tx *Connection) {
 		addr := Address{HouseNumber: 42, Street: "Life"}
-		addrVerrs, addrErr := tx.ValidateAndCreate(&addr)
+		addrVerrs, addrErr := tx.ValidateAndCreate(nil, &addr)
 		r.NoError(addrErr)
-		addrCount, _ := tx.Count(&Address{})
+		addrCount, _ := tx.Count(nil, &Address{})
 		r.Zero(addrVerrs.Count())
 		r.Equal(1, addrCount)
 		r.NotZero(addr.ID)
 
 		book := Book{Title: "Pop Book", Isbn: "PB1", Description: "Awesome Book!"}
-		bookVerrs, bookErr := tx.ValidateAndCreate(&book)
+		bookVerrs, bookErr := tx.ValidateAndCreate(nil, &book)
 		r.NoError(bookErr)
-		bookCount, _ := tx.Count(&Book{})
+		bookCount, _ := tx.Count(nil, &Book{})
 		r.Zero(bookVerrs.Count())
 		r.Equal(1, bookCount)
 		r.NotZero(book.ID)
 
 		song := Song{Title: "Hook - Blues Traveler"}
-		songVerrs, songErr := tx.ValidateAndCreate(&song)
+		songVerrs, songErr := tx.ValidateAndCreate(nil, &song)
 		r.NoError(songErr)
-		songCount, _ := tx.Count(&Song{})
+		songCount, _ := tx.Count(nil, &Song{})
 		r.Zero(songVerrs.Count())
 		r.Equal(1, songCount)
 		r.NotZero(song.ID)
 
-		m2mCount, m2mErr := tx.Count(&UsersAddress{})
+		m2mCount, m2mErr := tx.Count(nil, &UsersAddress{})
 		r.NoError(m2mErr)
 		r.Zero(m2mCount)
 
@@ -1026,32 +1026,32 @@ func Test_Flat_Validate_And_Create_Parental_With_Partial_Existing(t *testing.T) 
 				Address{ID: addr.ID},
 			},
 		}
-		count, _ := tx.Count(&User{})
+		count, _ := tx.Count(nil, &User{})
 
-		verrs, err := tx.ValidateAndCreate(&user)
+		verrs, err := tx.ValidateAndCreate(nil, &user)
 		r.NoError(err)
 		r.NotEqual(user.ID, 0)
 		r.Equal(0, verrs.Count())
 
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Address{})
+		ctx, _ = tx.Count(nil, &Address{})
 		r.Equal(addrCount, ctx)
 
-		ctx, _ = tx.Where("user_id = ?", user.ID).Count(&Book{})
+		ctx, _ = tx.Where("user_id = ?", user.ID).Count(nil, &Book{})
 		r.Equal(bookCount, ctx)
 
-		ctx, _ = tx.Count(&Song{})
+		ctx, _ = tx.Count(nil, &Song{})
 		r.Equal(songCount, ctx)
 
-		m2mCount, m2mErr = tx.Count(&UsersAddress{})
+		m2mCount, m2mErr = tx.Count(nil, &UsersAddress{})
 		r.NoError(m2mErr)
 		r.Equal(1, m2mCount)
 
 		u := User{}
 		q := tx.Eager().Where("name = ?", "Mark 'Awesome' Bates")
-		err = q.First(&u)
+		err = q.First(nil, &u)
 		r.NoError(err)
 		r.Equal(u.Name.String, "Mark 'Awesome' Bates")
 		r.Equal(1, len(u.Books))
@@ -1078,13 +1078,13 @@ func Test_Eager_Create_Belongs_To(t *testing.T) {
 			},
 		}
 
-		err := tx.Eager().Create(&book)
+		err := tx.Eager().Create(nil, &book)
 		r.NoError(err)
 
-		ctx, _ := tx.Count(&Book{})
+		ctx, _ := tx.Count(nil, &Book{})
 		r.Equal(1, ctx)
 
-		ctx, _ = tx.Count(&User{})
+		ctx, _ = tx.Count(nil, &User{})
 		r.Equal(1, ctx)
 
 		car := Taxi{
@@ -1094,13 +1094,13 @@ func Test_Eager_Create_Belongs_To(t *testing.T) {
 			},
 		}
 
-		err = tx.Eager().Create(&car)
+		err = tx.Eager().Create(nil, &car)
 		r.NoError(err)
 
-		ctx, _ = tx.Count(&Taxi{})
+		ctx, _ = tx.Count(nil, &Taxi{})
 		r.Equal(1, ctx)
 
-		err = tx.Eager().Find(&car, car.ID)
+		err = tx.Eager().Find(nil, &car, car.ID)
 		r.NoError(err)
 
 		r.Equal(nulls.NewString("Larry 2"), car.Driver.Name)
@@ -1118,15 +1118,15 @@ func Test_Eager_Create_Belongs_To_Pointers(t *testing.T) {
 			Head: &Head{},
 		}
 
-		err := tx.Eager().Create(&body)
+		err := tx.Eager().Create(nil, &body)
 		r.NoError(err)
 		r.NotZero(body.ID)
 		r.NotZero(body.Head.ID)
 
-		ctx, _ := tx.Count(&Body{})
+		ctx, _ := tx.Count(nil, &Body{})
 		r.Equal(1, ctx)
 
-		ctx, _ = tx.Count(&Head{})
+		ctx, _ = tx.Count(nil, &Head{})
 		r.Equal(1, ctx)
 
 		// Create a body without a head:
@@ -1134,18 +1134,18 @@ func Test_Eager_Create_Belongs_To_Pointers(t *testing.T) {
 			Head: nil,
 		}
 
-		err = tx.Eager().Create(&body)
+		err = tx.Eager().Create(nil, &body)
 		r.NoError(err)
 		r.NotZero(body.ID)
 		r.Nil(body.Head)
 
-		ctx, _ = tx.Count(&Body{})
+		ctx, _ = tx.Count(nil, &Body{})
 		r.Equal(2, ctx)
 
-		ctx, _ = tx.Count(&Head{})
+		ctx, _ = tx.Count(nil, &Head{})
 		r.Equal(1, ctx)
 
-		err = tx.Eager().Create(&Head{
+		err = tx.Eager().Create(nil, &Head{
 			BodyID: body.ID,
 			Body:   nil,
 		})
@@ -1164,7 +1164,7 @@ func Test_Create_Belongs_To_Pointers(t *testing.T) {
 			Head: nil,
 		}
 
-		err := tx.Create(&body)
+		err := tx.Create(nil, &body)
 		r.NoError(err)
 		r.NotZero(body.ID)
 		r.Nil(body.Head)
@@ -1173,11 +1173,11 @@ func Test_Create_Belongs_To_Pointers(t *testing.T) {
 		created := HeadPtr{
 			Body: &body,
 		}
-		err = tx.Create(&created)
+		err = tx.Create(nil, &created)
 		r.NoError(err)
 
 		found := HeadPtr{}
-		err = tx.Find(&found, created.ID)
+		err = tx.Find(nil, &found, created.ID)
 		r.NoError(err)
 		r.Equal(body.ID, *found.BodyID)
 	})
@@ -1193,9 +1193,9 @@ func Test_Flat_Create_Belongs_To(t *testing.T) {
 			Name: nulls.NewString("Larry"),
 		}
 
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Equal(1, ctx)
 
 		book := Book{
@@ -1205,13 +1205,13 @@ func Test_Flat_Create_Belongs_To(t *testing.T) {
 			User:        user,
 		}
 
-		err = tx.Create(&book)
+		err = tx.Create(nil, &book)
 		r.NoError(err)
 
-		ctx, _ = tx.Count(&Book{})
+		ctx, _ = tx.Count(nil, &Book{})
 		r.Equal(1, ctx)
 
-		err = tx.Eager().Find(&book, book.ID)
+		err = tx.Eager().Find(nil, &book, book.ID)
 		r.NoError(err)
 
 		r.Equal(nulls.NewString("Larry"), book.User.Name)
@@ -1221,13 +1221,13 @@ func Test_Flat_Create_Belongs_To(t *testing.T) {
 			Driver: &user,
 		}
 
-		err = tx.Create(&car)
+		err = tx.Create(nil, &car)
 		r.NoError(err)
 
-		ctx, _ = tx.Count(&Taxi{})
+		ctx, _ = tx.Count(nil, &Taxi{})
 		r.Equal(1, ctx)
 
-		err = tx.Eager().Find(&car, car.ID)
+		err = tx.Eager().Find(nil, &car, car.ID)
 		r.NoError(err)
 
 		r.Equal(nulls.NewString("Larry"), car.Driver.Name)
@@ -1244,10 +1244,10 @@ func Test_Eager_Creation_Without_Associations(t *testing.T) {
 			Course: Course{},
 		}
 
-		err := tx.Eager().Create(&code)
+		err := tx.Eager().Create(nil, &code)
 		r.NoError(err)
 
-		ctx, _ := tx.Count(&CourseCode{})
+		ctx, _ := tx.Count(nil, &CourseCode{})
 		r.Equal(1, ctx)
 	})
 }
@@ -1281,7 +1281,7 @@ func Test_Eager_Embedded_Struct(t *testing.T) {
 			AssocFields
 		}
 
-		count, _ := tx.Count(&User{})
+		count, _ := tx.Count(nil, &User{})
 		user := User{
 			UserName: "dumb-dumb",
 			Name:     nulls.NewString("Arthur Dent"),
@@ -1294,25 +1294,25 @@ func Test_Eager_Embedded_Struct(t *testing.T) {
 			},
 		}
 
-		err := tx.Eager().Create(&user)
+		err := tx.Eager().Create(nil, &user)
 		r.NoError(err)
 		r.NotZero(user.ID)
 
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Book{})
+		ctx, _ = tx.Count(nil, &Book{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Song{})
+		ctx, _ = tx.Count(nil, &Song{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Address{})
+		ctx, _ = tx.Count(nil, &Address{})
 		r.Equal(count+1, ctx)
 
 		u := User{}
 		q := tx.Eager().Where("name = ?", user.Name.String)
-		err = q.First(&u)
+		err = q.First(nil, &u)
 		r.NoError(err)
 
 		r.Equal(user.Name.String, u.Name.String)
@@ -1353,7 +1353,7 @@ func Test_Eager_Embedded_Ptr_Struct(t *testing.T) {
 			*AssocFields
 		}
 
-		count, _ := tx.Count(&User{})
+		count, _ := tx.Count(nil, &User{})
 		user := User{
 			UserName: "dumb-dumb",
 			Name:     nulls.NewString("Arthur Dent"),
@@ -1366,25 +1366,25 @@ func Test_Eager_Embedded_Ptr_Struct(t *testing.T) {
 			},
 		}
 
-		err := tx.Eager().Create(&user)
+		err := tx.Eager().Create(nil, &user)
 		r.NoError(err)
 		r.NotZero(user.ID)
 
-		ctx, _ := tx.Count(&User{})
+		ctx, _ := tx.Count(nil, &User{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Book{})
+		ctx, _ = tx.Count(nil, &Book{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Song{})
+		ctx, _ = tx.Count(nil, &Song{})
 		r.Equal(count+1, ctx)
 
-		ctx, _ = tx.Count(&Address{})
+		ctx, _ = tx.Count(nil, &Address{})
 		r.Equal(count+1, ctx)
 
 		u := User{}
 		q := tx.Eager().Where("name = ?", user.Name.String)
-		err = q.First(&u)
+		err = q.First(nil, &u)
 		r.NoError(err)
 
 		r.Equal(user.Name.String, u.Name.String)
@@ -1403,20 +1403,20 @@ func Test_Create_UUID(t *testing.T) {
 	transaction(func(tx *Connection) {
 		r := require.New(t)
 
-		count, _ := tx.Count(&Song{})
+		count, _ := tx.Count(nil, &Song{})
 		song := Song{Title: "Automatic Buffalo"}
 		r.Equal(uuid.Nil, song.ID)
-		err := tx.Create(&song)
+		err := tx.Create(nil, &song)
 		r.NoError(err)
 		r.NotZero(song.ID)
 		r.NotEqual(uuid.Nil, song.ID)
 
-		ctx, _ := tx.Count(&Song{})
+		ctx, _ := tx.Count(nil, &Song{})
 		r.Equal(count+1, ctx)
 
 		u := Song{}
 		q := tx.Where("title = ?", "Automatic Buffalo")
-		err = q.First(&u)
+		err = q.First(nil, &u)
 		r.NoError(err)
 	})
 }
@@ -1430,18 +1430,18 @@ func Test_Create_Existing_UUID(t *testing.T) {
 		id, err := uuid.NewV4()
 		r.NoError(err)
 
-		count, _ := tx.Count(&Song{})
+		count, _ := tx.Count(nil, &Song{})
 		song := Song{
 			ID:    id,
 			Title: "Automatic Buffalo",
 		}
 
-		err = tx.Create(&song)
+		err = tx.Create(nil, &song)
 		r.NoError(err)
 		r.NotZero(song.ID)
 		r.Equal(id.String(), song.ID.String())
 
-		ctx, _ := tx.Count(&Song{})
+		ctx, _ := tx.Count(nil, &Song{})
 		r.Equal(count+1, ctx)
 
 	})
@@ -1458,14 +1458,14 @@ func Test_Create_Timestamps(t *testing.T) {
 		r.Zero(user.CreatedAt)
 		r.Zero(user.UpdatedAt)
 
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		r.NotZero(user.CreatedAt)
 		r.NotZero(user.UpdatedAt)
 
 		friend := Friend{FirstName: "Ross", LastName: "Gellar"}
-		err = tx.Create(&friend)
+		err = tx.Create(nil, &friend)
 		r.NoError(err)
 	})
 }
@@ -1478,16 +1478,16 @@ func Test_Update(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		tx.Create(&user)
+		tx.Create(nil, &user)
 
 		r.NotZero(user.CreatedAt)
 		r.NotZero(user.UpdatedAt)
 
 		user.Name.String = "Marky"
-		err := tx.Update(&user)
+		err := tx.Update(nil, &user)
 		r.NoError(err)
 
-		r.NoError(tx.Reload(&user))
+		r.NoError(tx.Reload(nil, &user))
 		r.Equal(user.Name.String, "Marky")
 	})
 }
@@ -1500,17 +1500,17 @@ func Test_UpdateColumns(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		tx.Create(&user)
+		tx.Create(nil, &user)
 
 		r.NotZero(user.CreatedAt)
 		r.NotZero(user.UpdatedAt)
 
 		user.Name.String = "Fulano"
 		user.UserName = "Fulano"
-		err := tx.UpdateColumns(&user, "user_name") // Update UserName field/column only
+		err := tx.UpdateColumns(nil, &user, "user_name") // Update UserName field/column only
 		r.NoError(err)
 
-		r.NoError(tx.Reload(&user))
+		r.NoError(tx.Reload(nil, &user))
 		r.Equal(user.Name.String, "Mark") // Name column should not be updated
 		r.Equal(user.UserName, "Fulano")
 	})
@@ -1522,15 +1522,15 @@ func Test_UpdateQuery_NoUpdatedAt(t *testing.T) {
 	}
 	transaction(func(tx *Connection) {
 		r := require.New(t)
-		existing, err := PDB.Count(&NonStandardID{}) // from previous test runs
+		existing, err := PDB.Count(nil, &NonStandardID{}) // from previous test runs
 		r.NoError(err)
 		r.GreaterOrEqual(existing, 0)
-		r.NoError(PDB.Create(&NonStandardID{OutfacingID: "must-change"}))
-		count, err := PDB.Where("true").UpdateQuery(&NonStandardID{OutfacingID: "has-changed"}, "id")
+		r.NoError(PDB.Create(nil, &NonStandardID{OutfacingID: "must-change"}))
+		count, err := PDB.Where("true").UpdateQuery(nil, &NonStandardID{OutfacingID: "has-changed"}, "id")
 		r.NoError(err)
 		r.Equal(int64(existing+1), count)
 		entity := NonStandardID{}
-		r.NoError(PDB.First(&entity))
+		r.NoError(PDB.First(nil, &entity))
 		r.Equal("has-changed", entity.OutfacingID)
 	})
 }
@@ -1542,17 +1542,17 @@ func Test_UpdateQuery_NoTransaction(t *testing.T) {
 
 	r := require.New(t)
 	u1 := User{Name: nulls.NewString("Foo"), Bio: nulls.NewString("must-not-change-1")}
-	r.NoError(PDB.Create(&u1))
-	r.NoError(PDB.Reload(&u1))
-	count, err := PDB.Where("name = ?", "Nemo").UpdateQuery(&User{Bio: nulls.NewString("did-change")}, "bio")
+	r.NoError(PDB.Create(nil, &u1))
+	r.NoError(PDB.Reload(nil, &u1))
+	count, err := PDB.Where("name = ?", "Nemo").UpdateQuery(nil, &User{Bio: nulls.NewString("did-change")}, "bio")
 	r.NoError(err)
 	require.Equal(t, int64(0), count)
 
-	count, err = PDB.Where("name = ?", "Foo").UpdateQuery(&User{Name: nulls.NewString("Bar")}, "name")
+	count, err = PDB.Where("name = ?", "Foo").UpdateQuery(nil, &User{Name: nulls.NewString("Bar")}, "name")
 	r.NoError(err)
 	r.Equal(int64(1), count)
 
-	require.NoError(t, PDB.Destroy(&u1))
+	require.NoError(t, PDB.Destroy(nil, &u1))
 }
 
 func Test_UpdateQuery(t *testing.T) {
@@ -1565,32 +1565,32 @@ func Test_UpdateQuery(t *testing.T) {
 		u1 := User{Name: nulls.NewString("Foo"), Bio: nulls.NewString("must-not-change-1")}
 		u2 := User{Name: nulls.NewString("Foo"), Bio: nulls.NewString("must-not-change-2")}
 		u3 := User{Name: nulls.NewString("Baz"), Bio: nulls.NewString("must-not-change-3")}
-		tx.Create(&u1)
-		tx.Create(&u2)
-		tx.Create(&u3)
-		r.NoError(tx.Reload(&u1))
-		r.NoError(tx.Reload(&u2))
-		r.NoError(tx.Reload(&u3))
+		tx.Create(nil, &u1)
+		tx.Create(nil, &u2)
+		tx.Create(nil, &u3)
+		r.NoError(tx.Reload(nil, &u1))
+		r.NoError(tx.Reload(nil, &u2))
+		r.NoError(tx.Reload(nil, &u3))
 		time.Sleep(time.Millisecond * 1)
 
 		// No affected rows
-		count, err := tx.Where("name = ?", "Nemo").UpdateQuery(&User{Bio: nulls.NewString("did-change")}, "bio")
+		count, err := tx.Where("name = ?", "Nemo").UpdateQuery(nil, &User{Bio: nulls.NewString("did-change")}, "bio")
 		r.NoError(err)
 		require.Equal(t, int64(0), count)
 		mustUnchanged := &User{}
-		r.NoError(tx.Find(mustUnchanged, u1.ID))
+		r.NoError(tx.Find(nil, mustUnchanged, u1.ID))
 		r.Equal(u1.Bio, mustUnchanged.Bio)
 		r.Equal(u1.UpdatedAt, mustUnchanged.UpdatedAt)
 
 		// Correct rows are updated, including updated_at
-		count, err = tx.Where("name = ?", "Foo").UpdateQuery(&User{Name: nulls.NewString("Bar")}, "name")
+		count, err = tx.Where("name = ?", "Foo").UpdateQuery(nil, &User{Name: nulls.NewString("Bar")}, "name")
 		r.NoError(err)
 		r.Equal(int64(2), count)
 
 		u1b, u2b, u3b := &User{}, &User{}, &User{}
-		r.NoError(tx.Find(u1b, u1.ID))
-		r.NoError(tx.Find(u2b, u2.ID))
-		r.NoError(tx.Find(u3b, u3.ID))
+		r.NoError(tx.Find(nil, u1b, u1.ID))
+		r.NoError(tx.Find(nil, u2b, u2.ID))
+		r.NoError(tx.Find(nil, u3b, u3.ID))
 		r.Equal(u1b.Name.String, "Bar")
 		r.Equal(u2b.Name.String, "Bar")
 		r.Equal(u3b.Name.String, "Baz")
@@ -1604,19 +1604,19 @@ func Test_UpdateQuery(t *testing.T) {
 		r.Equal(u3.UpdatedAt, u3b.UpdatedAt)
 
 		// ID is ignored
-		count, err = tx.Where("true").UpdateQuery(&User{ID: 123, Name: nulls.NewString("Bar")}, "id", "name")
-		r.NoError(tx.Find(u1b, u1.ID))
-		r.NoError(tx.Find(u2b, u2.ID))
-		r.NoError(tx.Find(u3b, u3.ID))
+		count, err = tx.Where("true").UpdateQuery(nil, &User{ID: 123, Name: nulls.NewString("Bar")}, "id", "name")
+		r.NoError(tx.Find(nil, u1b, u1.ID))
+		r.NoError(tx.Find(nil, u2b, u2.ID))
+		r.NoError(tx.Find(nil, u3b, u3.ID))
 		r.Equal(u1b.Name.String, "Bar")
 		r.Equal(u2b.Name.String, "Bar")
 		r.Equal(u3b.Name.String, "Bar")
 
 		// Invalid column yields an error
-		count, err = tx.Where("name = ?", "Foo").UpdateQuery(&User{Name: nulls.NewString("Bar")}, "mistake")
+		count, err = tx.Where("name = ?", "Foo").UpdateQuery(nil, &User{Name: nulls.NewString("Bar")}, "mistake")
 		r.Contains(err.Error(), "could not find name mistake")
 
-		tx.Where("true").Delete(&User{})
+		tx.Where("true").Delete(nil, &User{})
 	})
 }
 
@@ -1628,17 +1628,17 @@ func Test_UpdateColumns_UpdatedAt(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Foo")}
-		tx.Create(&user)
+		tx.Create(nil, &user)
 
 		r.NotZero(user.CreatedAt)
 		r.NotZero(user.UpdatedAt)
 		updatedAtBefore := user.UpdatedAt
 
 		user.Name.String = "Bar"
-		err := tx.UpdateColumns(&user, "name", "updated_at") // Update name and updated_at
+		err := tx.UpdateColumns(nil, &user, "name", "updated_at") // Update name and updated_at
 		r.NoError(err)
 
-		r.NoError(tx.Reload(&user))
+		r.NoError(tx.Reload(nil, &user))
 		r.NotEqual(user.UpdatedAt, updatedAtBefore) // UpdatedAt should be updated automatically
 	})
 }
@@ -1651,7 +1651,7 @@ func Test_UpdateColumns_MultipleColumns(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark"), UserName: "Sagan", Email: "test@example.com"}
-		tx.Create(&user)
+		tx.Create(nil, &user)
 
 		r.NotZero(user.CreatedAt)
 		r.NotZero(user.UpdatedAt)
@@ -1659,10 +1659,10 @@ func Test_UpdateColumns_MultipleColumns(t *testing.T) {
 		user.Name.String = "Ping"
 		user.UserName = "Pong"
 		user.Email = "fulano@example"
-		err := tx.UpdateColumns(&user, "name", "user_name") // Update multiple columns
+		err := tx.UpdateColumns(nil, &user, "name", "user_name") // Update multiple columns
 		r.NoError(err)
 
-		r.NoError(tx.Reload(&user))
+		r.NoError(tx.Reload(nil, &user))
 		r.Equal(user.Name.String, "Ping")
 		r.Equal(user.UserName, "Pong")
 		r.Equal(user.Email, "test@example.com") // Email should not be updated
@@ -1677,7 +1677,7 @@ func Test_UpdateColumns_All(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark"), UserName: "Sagan"}
-		tx.Create(&user)
+		tx.Create(nil, &user)
 
 		r.NotZero(user.CreatedAt)
 		r.NotZero(user.UpdatedAt)
@@ -1685,10 +1685,10 @@ func Test_UpdateColumns_All(t *testing.T) {
 		user.Name.String = "Ping"
 		user.UserName = "Pong"
 		user.Email = "ping@pong.com"
-		err := tx.UpdateColumns(&user) // Update all columns
+		err := tx.UpdateColumns(nil, &user) // Update all columns
 		r.NoError(err)
 
-		r.NoError(tx.Reload(&user))
+		r.NoError(tx.Reload(nil, &user))
 		r.Equal(user.Name.String, "Ping")
 		r.Equal(user.UserName, "Pong")
 		r.Equal(user.Email, "ping@pong.com")
@@ -1712,7 +1712,7 @@ func Test_UpdateColumns_With_Slice(t *testing.T) {
 				UserName: "Pong",
 			},
 		}
-		tx.Create(&user)
+		tx.Create(nil, &user)
 
 		r.NotZero(user[0].CreatedAt)
 		r.NotZero(user[0].UpdatedAt)
@@ -1725,10 +1725,10 @@ func Test_UpdateColumns_With_Slice(t *testing.T) {
 		user[1].Name.String = "Fulana"
 		user[1].UserName = "Freya"
 
-		err := tx.UpdateColumns(&user, "name") // Update Name field/column only
+		err := tx.UpdateColumns(nil, &user, "name") // Update Name field/column only
 		r.NoError(err)
 
-		r.NoError(tx.Reload(&user))
+		r.NoError(tx.Reload(nil, &user))
 		r.Equal(user[0].Name.String, "Fulano")
 		r.Equal(user[0].UserName, "Ping") // UserName should not be updated
 		r.Equal(user[1].Name.String, "Fulana")
@@ -1747,7 +1747,7 @@ func Test_Update_With_Slice(t *testing.T) {
 			{Name: nulls.NewString("Mark")},
 			{Name: nulls.NewString("Larry")},
 		}
-		tx.Create(&user)
+		tx.Create(nil, &user)
 
 		r.NotZero(user[0].CreatedAt)
 		r.NotZero(user[0].UpdatedAt)
@@ -1758,10 +1758,10 @@ func Test_Update_With_Slice(t *testing.T) {
 		user[0].Name.String = "Marky"
 		user[1].Name.String = "Lawrence"
 
-		err := tx.Update(&user)
+		err := tx.Update(nil, &user)
 		r.NoError(err)
 
-		r.NoError(tx.Reload(&user))
+		r.NoError(tx.Reload(nil, &user))
 		r.Equal(user[0].Name.String, "Marky")
 		r.Equal(user[1].Name.String, "Lawrence")
 	})
@@ -1775,17 +1775,17 @@ func Test_Update_UUID(t *testing.T) {
 		r := require.New(t)
 
 		song := Song{Title: "Automatic Buffalo"}
-		err := tx.Create(&song)
+		err := tx.Create(nil, &song)
 		r.NoError(err)
 
 		r.NotZero(song.CreatedAt)
 		r.NotZero(song.UpdatedAt)
 
 		song.Title = "Hum"
-		err = tx.Update(&song)
+		err = tx.Update(nil, &song)
 		r.NoError(err)
 
-		err = tx.Reload(&song)
+		err = tx.Reload(nil, &song)
 		r.NoError(err)
 		r.Equal("Hum", song.Title)
 	})
@@ -1798,22 +1798,22 @@ func Test_Update_With_Non_ID_PK(t *testing.T) {
 	transaction(func(tx *Connection) {
 		r := require.New(t)
 
-		r.NoError(tx.Create(&CrookedColour{Name: "cc is not the first one"}))
+		r.NoError(tx.Create(nil, &CrookedColour{Name: "cc is not the first one"}))
 
 		cc := CrookedColour{
 			Name: "You?",
 		}
-		err := tx.Create(&cc)
+		err := tx.Create(nil, &cc)
 		r.NoError(err)
 		r.NotZero(cc.ID)
 		id := cc.ID
 
 		updatedName := "Me!"
 		cc.Name = updatedName
-		r.NoError(tx.Update(&cc))
+		r.NoError(tx.Update(nil, &cc))
 		r.Equal(id, cc.ID)
 
-		r.NoError(tx.Reload(&cc))
+		r.NoError(tx.Reload(nil, &cc))
 		r.Equal(updatedName, cc.Name)
 		r.Equal(id, cc.ID)
 	})
@@ -1829,12 +1829,12 @@ func Test_Update_Non_PK_ID(t *testing.T) {
 		client := &NonStandardID{
 			OutfacingID: "my awesome hydra client",
 		}
-		r.NoError(tx.Create(client))
+		r.NoError(tx.Create(nil, client))
 
 		updatedID := "your awesome hydra client"
 		client.OutfacingID = updatedID
-		r.NoError(tx.Update(client))
-		r.NoError(tx.Reload(client))
+		r.NoError(tx.Update(nil, client))
+		r.NoError(tx.Reload(nil, client))
 		r.Equal(updatedID, client.OutfacingID)
 	})
 }
@@ -1846,21 +1846,21 @@ func Test_Destroy(t *testing.T) {
 	transaction(func(tx *Connection) {
 		r := require.New(t)
 
-		count, err := tx.Count("users")
+		count, err := tx.Count(nil, "users")
 		r.NoError(err)
 		user := User{Name: nulls.NewString("Mark")}
-		err = tx.Create(&user)
+		err = tx.Create(nil, &user)
 		r.NoError(err)
 		r.NotEqual(user.ID, 0)
 
-		ctx, err := tx.Count("users")
+		ctx, err := tx.Count(nil, "users")
 		r.NoError(err)
 		r.Equal(count+1, ctx)
 
-		err = tx.Destroy(&user)
+		err = tx.Destroy(nil, &user)
 		r.NoError(err)
 
-		ctx, _ = tx.Count("users")
+		ctx, _ = tx.Count(nil, "users")
 		r.Equal(count, ctx)
 	})
 }
@@ -1872,25 +1872,25 @@ func Test_Destroy_With_Slice(t *testing.T) {
 	transaction(func(tx *Connection) {
 		r := require.New(t)
 
-		count, err := tx.Count("users")
+		count, err := tx.Count(nil, "users")
 		r.NoError(err)
 		user := Users{
 			{Name: nulls.NewString("Mark")},
 			{Name: nulls.NewString("Larry")},
 		}
-		err = tx.Create(&user)
+		err = tx.Create(nil, &user)
 		r.NoError(err)
 		r.NotEqual(user[0].ID, 0)
 		r.NotEqual(user[1].ID, 0)
 
-		ctx, err := tx.Count("users")
+		ctx, err := tx.Count(nil, "users")
 		r.NoError(err)
 		r.Equal(count+2, ctx)
 
-		err = tx.Destroy(&user)
+		err = tx.Destroy(nil, &user)
 		r.NoError(err)
 
-		ctx, _ = tx.Count("users")
+		ctx, _ = tx.Count(nil, "users")
 		r.Equal(count, ctx)
 	})
 }
@@ -1902,21 +1902,21 @@ func Test_Destroy_UUID(t *testing.T) {
 	transaction(func(tx *Connection) {
 		r := require.New(t)
 
-		count, err := tx.Count("songs")
+		count, err := tx.Count(nil, "songs")
 		r.NoError(err)
 		song := Song{Title: "Automatic Buffalo"}
-		err = tx.Create(&song)
+		err = tx.Create(nil, &song)
 		r.NoError(err)
 		r.NotZero(song.ID)
 
-		ctx, err := tx.Count("songs")
+		ctx, err := tx.Count(nil, "songs")
 		r.NoError(err)
 		r.Equal(count+1, ctx)
 
-		err = tx.Destroy(&song)
+		err = tx.Destroy(nil, &song)
 		r.NoError(err)
 
-		ctx, _ = tx.Count("songs")
+		ctx, _ = tx.Count(nil, "songs")
 		r.Equal(count, ctx)
 	})
 }
@@ -1930,21 +1930,21 @@ func Test_TruncateAll(t *testing.T) {
 		r := require.New(t)
 
 		var err error
-		count, err = tx.Count("users")
+		count, err = tx.Count(nil, "users")
 		r.NoError(err)
 		user := User{Name: nulls.NewString("Mark")}
-		err = tx.Create(&user)
+		err = tx.Create(nil, &user)
 		r.NoError(err)
 		r.NotEqual(user.ID, 0)
 
-		ctx, err := tx.Count("users")
+		ctx, err := tx.Count(nil, "users")
 		r.NoError(err)
 		r.Equal(count+1, ctx)
 
 		err = tx.TruncateAll()
 		r.NoError(err)
 
-		ctx, _ = tx.Count("users")
+		ctx, _ = tx.Count(nil, "users")
 		r.Equal(count, ctx)
 	})
 }
@@ -1960,25 +1960,25 @@ func Test_Delete(t *testing.T) {
 		songTitles := []string{"Yoshimi Battles the Pink Robots, Pt. 1", "Face Down In The Gutter Of Your Love"}
 		user := User{Name: nulls.NewString("Patrik")}
 
-		r.NoError(tx.Create(&user))
+		r.NoError(tx.Create(nil, &user))
 		r.NotZero(user.ID)
 
-		count, err := tx.Count("songs")
+		count, err := tx.Count(nil, "songs")
 		r.NoError(err)
 
 		for _, title := range songTitles {
-			err = tx.Create(&Song{Title: title, UserID: user.ID})
+			err = tx.Create(nil, &Song{Title: title, UserID: user.ID})
 			r.NoError(err)
 		}
 
-		ctx, err := tx.Count("songs")
+		ctx, err := tx.Count(nil, "songs")
 		r.NoError(err)
 		r.Equal(count+len(songTitles), ctx)
 
-		err = tx.Where("u_id = ?", user.ID).Delete("songs")
+		err = tx.Where("u_id = ?", user.ID).Delete(nil, "songs")
 		r.NoError(err)
 
-		ctx, err = tx.Count("songs")
+		ctx, err = tx.Count(nil, "songs")
 		r.NoError(err)
 		r.Equal(count, ctx)
 	})
@@ -2001,7 +2001,7 @@ func Test_Create_Timestamps_With_NowFunc(t *testing.T) {
 		SetNowFunc(func() time.Time { return fakeNow })
 
 		friend := Friend{FirstName: "Yester", LastName: "Day"}
-		err := tx.Create(&friend)
+		err := tx.Create(nil, &friend)
 		r.NoError(err)
 
 		r.Equal(fakeNow, friend.CreatedAt)

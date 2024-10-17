@@ -96,7 +96,7 @@ func (cd *ConnectionDetails) withURL() error {
 	// warning message is required to prevent confusion
 	// even though this behavior was documented.
 	if cd.Database+cd.Host+cd.Port+cd.User+cd.Password != "" {
-		log(logging.Warn, "One or more of connection details are specified in database.yml. Override them with values in URL.")
+		log(logging.Warn, nil, "One or more of connection details are specified in database.yml. Override them with values in URL.")
 	}
 
 	if up, ok := urlParser[cd.Dialect]; ok {

@@ -13,6 +13,7 @@ import (
 	"github.com/gobuffalo/pop/v6/columns"
 	"github.com/gobuffalo/pop/v6/internal/defaults"
 	"github.com/gobuffalo/pop/v6/logging"
+	"github.com/gofrs/uuid"
 	"github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4/stdlib" // Load pgx driver
 	"github.com/jmoiron/sqlx"
@@ -51,7 +52,7 @@ func (p *postgresql) Details() *ConnectionDetails {
 	return p.ConnectionDetails
 }
 
-func (p *postgresql) Create(c *Connection, model *Model, cols columns.Columns) error {
+func (p *postgresql) Create(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns) error {
 	keyType, err := model.PrimaryKeyType()
 	if err != nil {
 		return err
@@ -66,7 +67,7 @@ func (p *postgresql) Create(c *Connection, model *Model, cols columns.Columns) e
 		} else {
 			query = fmt.Sprintf("INSERT INTO %s DEFAULT VALUES RETURNING %s", p.Quote(model.TableName()), model.IDField())
 		}
-		txlog(logging.SQL, c, query, model.Value)
+		txlog(logging.SQL, requestID, c, query, model.Value)
 		rows, err := c.Store.NamedQueryContext(model.ctx, query, model.Value)
 		if err != nil {
 			return fmt.Errorf("named insert: %w", err)
@@ -88,36 +89,36 @@ func (p *postgresql) Create(c *Connection, model *Model, cols columns.Columns) e
 		model.setID(id)
 		return nil
 	}
-	return genericCreate(c, model, cols, p)
+	return genericCreate(c, requestID, model, cols, p)
 }
 
-func (p *postgresql) Update(c *Connection, model *Model, cols columns.Columns) error {
-	return genericUpdate(c, model, cols, p)
+func (p *postgresql) Update(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns) error {
+	return genericUpdate(c, requestID, model, cols, p)
 }
 
-func (p *postgresql) UpdateQuery(c *Connection, model *Model, cols columns.Columns, query Query) (int64, error) {
-	return genericUpdateQuery(c, model, cols, p, query, sqlx.DOLLAR)
+func (p *postgresql) UpdateQuery(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns, query Query) (int64, error) {
+	return genericUpdateQuery(c, requestID, model, cols, p, query, sqlx.DOLLAR)
 }
 
-func (p *postgresql) Destroy(c *Connection, model *Model) error {
+func (p *postgresql) Destroy(c *Connection, requestID *uuid.UUID, model *Model) error {
 	stmt := p.TranslateSQL(fmt.Sprintf("DELETE FROM %s AS %s WHERE %s", p.Quote(model.TableName()), model.Alias(), model.WhereID()))
-	_, err := genericExec(c, stmt, model.ID())
+	_, err := genericExec(c, requestID, stmt, model.ID())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *postgresql) Delete(c *Connection, model *Model, query Query) error {
-	return genericDelete(c, model, query)
+func (p *postgresql) Delete(c *Connection, requestID *uuid.UUID, model *Model, query Query) error {
+	return genericDelete(c, requestID, model, query)
 }
 
-func (p *postgresql) SelectOne(c *Connection, model *Model, query Query) error {
-	return genericSelectOne(c, model, query)
+func (p *postgresql) SelectOne(c *Connection, requestID *uuid.UUID, model *Model, query Query) error {
+	return genericSelectOne(c, requestID, model, query)
 }
 
-func (p *postgresql) SelectMany(c *Connection, models *Model, query Query) error {
-	return genericSelectMany(c, models, query)
+func (p *postgresql) SelectMany(c *Connection, requestID *uuid.UUID, models *Model, query Query) error {
+	return genericSelectMany(c, requestID, models, query)
 }
 
 func (p *postgresql) CreateDB() error {
@@ -130,14 +131,14 @@ func (p *postgresql) CreateDB() error {
 	}
 	defer db.Close()
 	query := fmt.Sprintf("CREATE DATABASE %s", p.Quote(deets.Database))
-	log(logging.SQL, query)
+	log(logging.SQL, nil, query)
 
 	_, err = db.Exec(query)
 	if err != nil {
 		return fmt.Errorf("error creating PostgreSQL database %s: %w", deets.Database, err)
 	}
 
-	log(logging.Info, "created database %s", deets.Database)
+	log(logging.Info, nil, "created database %s", deets.Database)
 	return nil
 }
 
@@ -150,14 +151,14 @@ func (p *postgresql) DropDB() error {
 	}
 	defer db.Close()
 	query := fmt.Sprintf("DROP DATABASE %s", p.Quote(deets.Database))
-	log(logging.SQL, query)
+	log(logging.SQL, nil, query)
 
 	_, err = db.Exec(query)
 	if err != nil {
 		return fmt.Errorf("error dropping PostgreSQL database %s: %w", deets.Database, err)
 	}
 
-	log(logging.Info, "dropped database %s", deets.Database)
+	log(logging.Info, nil, "dropped database %s", deets.Database)
 	return nil
 }
 
@@ -213,7 +214,7 @@ func (p *postgresql) LoadSchema(r io.Reader) error {
 
 // TruncateAll truncates all tables for the given connection.
 func (p *postgresql) TruncateAll(tx *Connection) error {
-	return tx.RawQuery(fmt.Sprintf(pgTruncate, tx.MigrationTableName())).Exec()
+	return tx.RawQuery(fmt.Sprintf(pgTruncate, tx.MigrationTableName())).Exec(nil)
 }
 
 func newPostgreSQL(deets *ConnectionDetails) (dialect, error) {

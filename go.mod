@@ -3,7 +3,7 @@ module github.com/gobuffalo/pop/v6
 go 1.16
 
 require (
-	github.com/XSAM/otelsql v0.20.0 // indirect
+	github.com/XSAM/otelsql v0.20.0
 	github.com/fatih/color v1.13.0
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/gobuffalo/attrs v1.0.3

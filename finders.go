@@ -20,19 +20,19 @@ var rLimit = regexp.MustCompile("(?i)(limit [0-9]+)$")
 // Find the first record of the model in the database with a particular id.
 //
 //	c.Find(&User{}, 1)
-func (c *Connection) Find(model interface{}, id interface{}) error {
-	return Q(c).Find(model, id)
+func (c *Connection) Find(requestID *uuid.UUID, model interface{}, id interface{}) error {
+	return Q(c).Find(requestID, model, id)
 }
 
 // Find the first record of the model in the database with a particular id.
 //
 //	q.Find(&User{}, 1)
-func (q *Query) Find(model interface{}, id interface{}) error {
+func (q *Query) Find(requestID *uuid.UUID, model interface{}, id interface{}) error {
 	m := NewModel(model, q.Connection.Context())
 	idq := m.WhereID()
 	switch t := id.(type) {
 	case uuid.UUID:
-		return q.Where(idq, t.String()).First(model)
+		return q.Where(idq, t.String()).First(requestID, model)
 	default:
 		// Pick argument type based on column type. This is required for keeping backwards compatibility with:
 		//
@@ -46,31 +46,31 @@ func (q *Query) Find(model interface{}, id interface{}) error {
 		case "int32", "int64", "uint32", "uint64", "int8", "uint8", "int16", "uint16", "int":
 			if tid, ok := id.(string); ok {
 				if intID, err := strconv.Atoi(tid); err == nil {
-					return q.Where(idq, intID).First(model)
+					return q.Where(idq, intID).First(requestID, model)
 				}
 			}
 		}
 	}
 
-	return q.Where(idq, id).First(model)
+	return q.Where(idq, id).First(requestID, model)
 }
 
 // First record of the model in the database that matches the query.
 //
 //	c.First(&User{})
-func (c *Connection) First(model interface{}) error {
-	return Q(c).First(model)
+func (c *Connection) First(requestID *uuid.UUID, model interface{}) error {
+	return Q(c).First(requestID, model)
 }
 
 // First record of the model in the database that matches the query.
 //
 //	q.Where("name = ?", "mark").First(&User{})
-func (q *Query) First(model interface{}) error {
+func (q *Query) First(requestID *uuid.UUID, model interface{}) error {
 	var m *Model
 	err := q.Connection.timeFunc("First", func() error {
 		q.Limit(1)
 		m = NewModel(model, q.Connection.Context())
-		if err := q.Connection.Dialect.SelectOne(q.Connection, m, *q); err != nil {
+		if err := q.Connection.Dialect.SelectOne(q.Connection, requestID, m, *q); err != nil {
 			return err
 		}
 		return m.afterFind(q.Connection, false)
@@ -95,20 +95,20 @@ func (q *Query) First(model interface{}) error {
 // Last record of the model in the database that matches the query.
 //
 //	c.Last(&User{})
-func (c *Connection) Last(model interface{}) error {
-	return Q(c).Last(model)
+func (c *Connection) Last(requestID *uuid.UUID, model interface{}) error {
+	return Q(c).Last(requestID, model)
 }
 
 // Last record of the model in the database that matches the query.
 //
 //	q.Where("name = ?", "mark").Last(&User{})
-func (q *Query) Last(model interface{}) error {
+func (q *Query) Last(requestID *uuid.UUID, model interface{}) error {
 	var m *Model
 	err := q.Connection.timeFunc("Last", func() error {
 		q.Limit(1)
 		q.Order("created_at DESC, id DESC")
 		m = NewModel(model, q.Connection.Context())
-		if err := q.Connection.Dialect.SelectOne(q.Connection, m, *q); err != nil {
+		if err := q.Connection.Dialect.SelectOne(q.Connection, requestID, m, *q); err != nil {
 			return err
 		}
 		return m.afterFind(q.Connection, false)
@@ -133,23 +133,23 @@ func (q *Query) Last(model interface{}) error {
 // All retrieves all of the records in the database that match the query.
 //
 //	c.All(&[]User{})
-func (c *Connection) All(models interface{}) error {
-	return Q(c).All(models)
+func (c *Connection) All(requestID *uuid.UUID, models interface{}) error {
+	return Q(c).All(requestID, models)
 }
 
 // All retrieves all of the records in the database that match the query.
 //
 //	q.Where("name = ?", "mark").All(&[]User{})
-func (q *Query) All(models interface{}) error {
+func (q *Query) All(requestID *uuid.UUID, models interface{}) error {
 	var m *Model
 	err := q.Connection.timeFunc("All", func() error {
 		m = NewModel(models, q.Connection.Context())
-		err := q.Connection.Dialect.SelectMany(q.Connection, m, *q)
+		err := q.Connection.Dialect.SelectMany(q.Connection, requestID, m, *q)
 		if err != nil {
 			return err
 		}
 
-		err = q.paginateModel(models)
+		err = q.paginateModel(requestID, models)
 		if err != nil {
 			return err
 		}
@@ -173,12 +173,12 @@ func (q *Query) All(models interface{}) error {
 	return nil
 }
 
-func (q *Query) paginateModel(models interface{}) error {
+func (q *Query) paginateModel(requestID *uuid.UUID, models interface{}) error {
 	if q.Paginator == nil {
 		return nil
 	}
 
-	ct, err := q.Count(models)
+	ct, err := q.Count(requestID, models)
 	if err != nil {
 		return err
 	}
@@ -276,11 +276,11 @@ func (q *Query) eagerDefaultAssociations(model interface{}) error {
 		query = query.RawQuery(sqlSentence, args...)
 
 		if association.Kind() == reflect.Slice || association.Kind() == reflect.Array {
-			err = query.All(association.Interface())
+			err = query.All(nil, association.Interface())
 		}
 
 		if association.Kind() == reflect.Struct {
-			err = query.First(association.Interface())
+			err = query.First(nil, association.Interface())
 		}
 
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -340,7 +340,7 @@ func (q *Query) Exists(model interface{}) (bool, error) {
 		}
 
 		existsQuery := fmt.Sprintf("SELECT EXISTS (%s)", query)
-		txlog(logging.SQL, q.Connection, existsQuery, args...)
+		txlog(logging.SQL, nil, q.Connection, existsQuery, args...)
 		return q.Connection.Store.Get(&res, existsQuery, args...)
 	})
 	return res, err
@@ -349,21 +349,21 @@ func (q *Query) Exists(model interface{}) (bool, error) {
 // Count the number of records in the database.
 //
 //	c.Count(&User{})
-func (c *Connection) Count(model interface{}) (int, error) {
-	return Q(c).Count(model)
+func (c *Connection) Count(requestID *uuid.UUID, model interface{}) (int, error) {
+	return Q(c).Count(requestID, model)
 }
 
 // Count the number of records in the database.
 //
 //	q.Where("name = ?", "mark").Count(&User{})
-func (q Query) Count(model interface{}) (int, error) {
-	return q.CountByField(model, "*")
+func (q Query) Count(requestID *uuid.UUID, model interface{}) (int, error) {
+	return q.CountByField(requestID, model, "*")
 }
 
 // CountByField counts the number of records in the database, for a given field.
 //
 //	q.Where("sex = ?", "f").Count(&User{}, "name")
-func (q Query) CountByField(model interface{}, field string) (int, error) {
+func (q Query) CountByField(requestID *uuid.UUID, model interface{}, field string) (int, error) {
 	tmpQuery := Q(q.Connection)
 	q.Clone(tmpQuery) // avoid meddling with original query
 
@@ -386,7 +386,7 @@ func (q Query) CountByField(model interface{}, field string) (int, error) {
 		}
 
 		countQuery := fmt.Sprintf("SELECT COUNT(%s) AS row_count FROM (%s) a", field, query)
-		txlog(logging.SQL, q.Connection, countQuery, args...)
+		txlog(logging.SQL, requestID, q.Connection, countQuery, args...)
 		return q.Connection.Store.Get(res, countQuery, args...)
 	})
 	return res.Count, err
