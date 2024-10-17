@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/Accefy/pop/columns"
 	"github.com/Accefy/pop/internal/defaults"
 	"github.com/gobuffalo/flect"
 	"github.com/gobuffalo/nulls"
-	"github.com/gobuffalo/pop/v6/columns"
 )
 
 // belongsToAssociation is the implementation for the belongs_to association type in a model.

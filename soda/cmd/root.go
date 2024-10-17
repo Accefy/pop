@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/Accefy/pop"
 	"github.com/Accefy/pop/internal/defaults"
-	"github.com/gobuffalo/pop/v6"
 	"github.com/spf13/cobra"
 )
 

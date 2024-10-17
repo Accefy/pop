@@ -3,7 +3,7 @@ package pop
 import (
 	"fmt"
 
-	"github.com/gobuffalo/pop/v6/logging"
+	"github.com/Accefy/pop/logging"
 )
 
 // CreateDB creates a database, given a connection definition

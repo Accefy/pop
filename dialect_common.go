@@ -11,8 +11,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/gobuffalo/pop/v6/columns"
-	"github.com/gobuffalo/pop/v6/logging"
+	"github.com/Accefy/pop/columns"
+	"github.com/Accefy/pop/logging"
 	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
 )

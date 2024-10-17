@@ -8,12 +8,12 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Accefy/pop/columns"
 	"github.com/Accefy/pop/internal/defaults"
+	"github.com/Accefy/pop/logging"
 	_mysql "github.com/go-sql-driver/mysql" // Load MySQL Go driver
 	"github.com/gobuffalo/fizz"
 	"github.com/gobuffalo/fizz/translators"
-	"github.com/gobuffalo/pop/v6/columns"
-	"github.com/gobuffalo/pop/v6/logging"
 	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
 )

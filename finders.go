@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gobuffalo/pop/v6/associations"
-	"github.com/gobuffalo/pop/v6/logging"
+	"github.com/Accefy/pop/associations"
+	"github.com/Accefy/pop/logging"
 	"github.com/gofrs/uuid"
 )
 

@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gobuffalo/pop/v6/testdata/models/a"
-	"github.com/gobuffalo/pop/v6/testdata/models/ac"
-	"github.com/gobuffalo/pop/v6/testdata/models/b"
-	"github.com/gobuffalo/pop/v6/testdata/models/bc"
+	"github.com/Accefy/pop/testdata/models/a"
+	"github.com/Accefy/pop/testdata/models/ac"
+	"github.com/Accefy/pop/testdata/models/b"
+	"github.com/Accefy/pop/testdata/models/bc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gobuffalo/pop/v6/logging"
+	"github.com/Accefy/pop/logging"
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/require"
 )

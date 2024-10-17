@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Accefy/pop"
+	"github.com/Accefy/pop/genny/config"
 	"github.com/Accefy/pop/internal/defaults"
 	"github.com/gobuffalo/genny/v2"
-	"github.com/gobuffalo/pop/v6"
-	"github.com/gobuffalo/pop/v6/genny/config"
 	"github.com/spf13/cobra"
 )
 

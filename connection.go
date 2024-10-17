@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/Accefy/pop/internal/defaults"
-	"github.com/gobuffalo/pop/v6/internal/randx"
-	"github.com/gobuffalo/pop/v6/logging"
+	"github.com/Accefy/pop/internal/randx"
+	"github.com/Accefy/pop/logging"
 	"github.com/gofrs/uuid"
 )
 

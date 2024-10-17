@@ -3,8 +3,8 @@ package pop
 import (
 	"io"
 
+	"github.com/Accefy/pop/columns"
 	"github.com/gobuffalo/fizz"
-	"github.com/gobuffalo/pop/v6/columns"
 	"github.com/gofrs/uuid"
 )
 

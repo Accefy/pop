@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/Accefy/pop/logging"
 	"github.com/gobuffalo/envy"
-	"github.com/gobuffalo/pop/v6/logging"
 	"gopkg.in/yaml.v2"
 )
 

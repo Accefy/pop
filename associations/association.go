@@ -3,8 +3,8 @@ package associations
 import (
 	"reflect"
 
+	"github.com/Accefy/pop/columns"
 	"github.com/gobuffalo/nulls"
-	"github.com/gobuffalo/pop/v6/columns"
 )
 
 // Association represents a definition of a model association
