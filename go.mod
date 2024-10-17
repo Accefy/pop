@@ -1,4 +1,4 @@
-module github.com/Accefy/pop
+module github.com/Accefy/pop/v6
 
 go 1.22
 
