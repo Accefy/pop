@@ -46,7 +46,7 @@ func Test_ModelContext(t *testing.T) {
 		r := require.New(t)
 		r.Panics(func() {
 			var c ContextTable
-			r.NoError(PDB.Create(&c))
+			r.NoError(PDB.Create(nil, &c))
 		}, "panics if context prefix is not set")
 	})
 
@@ -56,10 +56,10 @@ func Test_ModelContext(t *testing.T) {
 
 			expected := ContextTable{ID: prefix, Value: prefix}
 			c := PDB.WithContext(context.WithValue(context.Background(), "prefix", prefix))
-			r.NoError(c.Create(&expected))
+			r.NoError(c.Create(nil, &expected))
 
 			var actual ContextTable
-			r.NoError(c.Find(&actual, expected.ID))
+			r.NoError(c.Find(nil, &actual, expected.ID))
 			r.EqualValues(prefix, actual.Value)
 			r.EqualValues(prefix, actual.ID)
 
@@ -67,31 +67,31 @@ func Test_ModelContext(t *testing.T) {
 			r.NoError(err)
 			r.True(exists)
 
-			count, err := c.Where("id = ?", actual.ID).Count(new(ContextTable))
+			count, err := c.Where("id = ?", actual.ID).Count(nil, new(ContextTable))
 			r.NoError(err)
 			r.EqualValues(1, count)
 
 			expected.Value += expected.Value
-			r.NoError(c.Update(&expected))
+			r.NoError(c.Update(nil, &expected))
 
-			r.NoError(c.Find(&actual, expected.ID))
+			r.NoError(c.Find(nil, &actual, expected.ID))
 			r.EqualValues(prefix+prefix, actual.Value)
 			r.EqualValues(prefix, actual.ID)
 
 			var results []ContextTable
-			require.NoError(t, c.All(&results))
+			require.NoError(t, c.All(nil, &results))
 
-			require.NoError(t, c.First(&expected))
-			require.NoError(t, c.Last(&expected))
+			require.NoError(t, c.First(nil, &expected))
+			require.NoError(t, c.Last(nil, &expected))
 
-			r.NoError(c.Destroy(&expected))
+			r.NoError(c.Destroy(nil, &expected))
 		})
 	}
 
 	t.Run("prefix=unknown", func(t *testing.T) {
 		r := require.New(t)
 		c := PDB.WithContext(context.WithValue(context.Background(), "prefix", "unknown"))
-		err := c.Create(&ContextTable{ID: "unknown"})
+		err := c.Create(nil, &ContextTable{ID: "unknown"})
 		r.Error(err)
 
 		if !strings.Contains(err.Error(), "context_prefix_unknown") { // All other databases
@@ -102,22 +102,22 @@ func Test_ModelContext(t *testing.T) {
 	t.Run("cache_busting", func(t *testing.T) {
 		r := require.New(t)
 
-		r.NoError(PDB.WithContext(context.WithValue(context.Background(), "prefix", "a")).Destroy(&ContextTable{ID: "expectedA"}))
-		r.NoError(PDB.WithContext(context.WithValue(context.Background(), "prefix", "b")).Destroy(&ContextTable{ID: "expectedB"}))
+		r.NoError(PDB.WithContext(context.WithValue(context.Background(), "prefix", "a")).Destroy(nil, &ContextTable{ID: "expectedA"}))
+		r.NoError(PDB.WithContext(context.WithValue(context.Background(), "prefix", "b")).Destroy(nil, &ContextTable{ID: "expectedB"}))
 
 		var expectedA, expectedB ContextTable
 		expectedA.ID = "expectedA"
 		expectedB.ID = "expectedB"
 
 		cA := PDB.WithContext(context.WithValue(context.Background(), "prefix", "a"))
-		r.NoError(cA.Create(&expectedA))
+		r.NoError(cA.Create(nil, &expectedA))
 
 		cB := PDB.WithContext(context.WithValue(context.Background(), "prefix", "b"))
-		r.NoError(cB.Create(&expectedB))
+		r.NoError(cB.Create(nil, &expectedB))
 
 		var actualA, actualB []ContextTable
-		r.NoError(cA.All(&actualA))
-		r.NoError(cB.All(&actualB))
+		r.NoError(cA.All(nil, &actualA))
+		r.NoError(cB.All(nil, &actualB))
 
 		r.Len(actualA, 1)
 		r.Len(actualB, 1)

@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/Accefy/pop/logging"
 	"github.com/gobuffalo/envy"
-	"github.com/gobuffalo/pop/v6/logging"
 	"gopkg.in/yaml.v2"
 )
 
@@ -42,7 +42,7 @@ func LoadConfigFile() error {
 		return err
 	}
 	Connections = map[string]*Connection{}
-	log(logging.Debug, "Loading config file from %s", path)
+	log(logging.Debug, nil, "Loading config file from %s", path)
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func LoadFrom(r io.Reader) error {
 	for n, d := range deets {
 		con, err := NewConnection(d)
 		if err != nil {
-			log(logging.Warn, "unable to load connection %s: %v", n, err)
+			log(logging.Warn, nil, "unable to load connection %s: %v", n, err)
 			continue
 		}
 		Connections[n] = con

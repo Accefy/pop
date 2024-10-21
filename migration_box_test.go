@@ -4,20 +4,22 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gobuffalo/pop/v6/logging"
+	"github.com/Accefy/pop/logging"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 type logEntry struct {
-	lvl  logging.Level
-	s    string
-	args []interface{}
+	lvl       logging.Level
+	requestID *uuid.UUID
+	s         string
+	args      []interface{}
 }
 
 func setNewTestLogger() *[]logEntry {
 	var logs []logEntry
-	log = func(lvl logging.Level, s string, args ...interface{}) {
-		logs = append(logs, logEntry{lvl, s, args})
+	log = func(lvl logging.Level, requestID *uuid.UUID, s string, args ...interface{}) {
+		logs = append(logs, logEntry{lvl, requestID, s, args})
 	}
 	return &logs
 }

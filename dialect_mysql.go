@@ -8,12 +8,13 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Accefy/pop/columns"
 	"github.com/Accefy/pop/internal/defaults"
+	"github.com/Accefy/pop/logging"
 	_mysql "github.com/go-sql-driver/mysql" // Load MySQL Go driver
 	"github.com/gobuffalo/fizz"
 	"github.com/gobuffalo/fizz/translators"
-	"github.com/gobuffalo/pop/v6/columns"
-	"github.com/gobuffalo/pop/v6/logging"
+	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -82,31 +83,31 @@ func (m *mysql) MigrationURL() string {
 	return m.URL()
 }
 
-func (m *mysql) Create(c *Connection, model *Model, cols columns.Columns) error {
-	if err := genericCreate(c, model, cols, m); err != nil {
+func (m *mysql) Create(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns) error {
+	if err := genericCreate(c, requestID, model, cols, m); err != nil {
 		return fmt.Errorf("mysql create: %w", err)
 	}
 	return nil
 }
 
-func (m *mysql) Update(c *Connection, model *Model, cols columns.Columns) error {
-	if err := genericUpdate(c, model, cols, m); err != nil {
+func (m *mysql) Update(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns) error {
+	if err := genericUpdate(c, requestID, model, cols, m); err != nil {
 		return fmt.Errorf("mysql update: %w", err)
 	}
 	return nil
 }
 
-func (m *mysql) UpdateQuery(c *Connection, model *Model, cols columns.Columns, query Query) (int64, error) {
-	if n, err := genericUpdateQuery(c, model, cols, m, query, sqlx.QUESTION); err != nil {
+func (m *mysql) UpdateQuery(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns, query Query) (int64, error) {
+	if n, err := genericUpdateQuery(c, requestID, model, cols, m, query, sqlx.QUESTION); err != nil {
 		return n, fmt.Errorf("mysql update query: %w", err)
 	} else {
 		return n, nil
 	}
 }
 
-func (m *mysql) Destroy(c *Connection, model *Model) error {
+func (m *mysql) Destroy(c *Connection, requestID *uuid.UUID, model *Model) error {
 	stmt := fmt.Sprintf("DELETE FROM %s  WHERE %s = ?", m.Quote(model.TableName()), model.IDField())
-	_, err := genericExec(c, stmt, model.ID())
+	_, err := genericExec(c, requestID, stmt, model.ID())
 	if err != nil {
 		return fmt.Errorf("mysql destroy: %w", err)
 	}
@@ -115,26 +116,26 @@ func (m *mysql) Destroy(c *Connection, model *Model) error {
 
 var asRegex = regexp.MustCompile(`\sAS\s\S+`) // exactly " AS non-spaces"
 
-func (m *mysql) Delete(c *Connection, model *Model, query Query) error {
+func (m *mysql) Delete(c *Connection, requestID *uuid.UUID, model *Model, query Query) error {
 	sqlQuery, args := query.ToSQL(model)
 	// * MySQL does not support table alias for DELETE syntax until 8.0.
 	// * Do not generate SQL manually if they may have `WHERE IN`.
 	// * Spaces are intentionally added to make it easy to see on the log.
 	sqlQuery = asRegex.ReplaceAllString(sqlQuery, "  ")
 
-	_, err := genericExec(c, sqlQuery, args...)
+	_, err := genericExec(c, requestID, sqlQuery, args...)
 	return err
 }
 
-func (m *mysql) SelectOne(c *Connection, model *Model, query Query) error {
-	if err := genericSelectOne(c, model, query); err != nil {
+func (m *mysql) SelectOne(c *Connection, requestID *uuid.UUID, model *Model, query Query) error {
+	if err := genericSelectOne(c, requestID, model, query); err != nil {
 		return fmt.Errorf("mysql select one: %w", err)
 	}
 	return nil
 }
 
-func (m *mysql) SelectMany(c *Connection, models *Model, query Query) error {
-	if err := genericSelectMany(c, models, query); err != nil {
+func (m *mysql) SelectMany(c *Connection, requestID *uuid.UUID, models *Model, query Query) error {
+	if err := genericSelectMany(c, requestID, models, query); err != nil {
 		return fmt.Errorf("mysql select many: %w", err)
 	}
 	return nil
@@ -151,14 +152,14 @@ func (m *mysql) CreateDB() error {
 	charset := defaults.String(deets.option("charset"), "utf8mb4")
 	encoding := defaults.String(deets.option("collation"), "utf8mb4_general_ci")
 	query := fmt.Sprintf("CREATE DATABASE `%s` DEFAULT CHARSET `%s` DEFAULT COLLATE `%s`", deets.Database, charset, encoding)
-	log(logging.SQL, query)
+	log(logging.SQL, nil, query)
 
 	_, err = db.Exec(query)
 	if err != nil {
 		return fmt.Errorf("error creating MySQL database %s: %w", deets.Database, err)
 	}
 
-	log(logging.Info, "created database %s", deets.Database)
+	log(logging.Info, nil, "created database %s", deets.Database)
 	return nil
 }
 
@@ -171,14 +172,14 @@ func (m *mysql) DropDB() error {
 	}
 	defer db.Close()
 	query := fmt.Sprintf("DROP DATABASE `%s`", deets.Database)
-	log(logging.SQL, query)
+	log(logging.SQL, nil, query)
 
 	_, err = db.Exec(query)
 	if err != nil {
 		return fmt.Errorf("error dropping MySQL database %s: %w", deets.Database, err)
 	}
 
-	log(logging.Info, "dropped database %s", deets.Database)
+	log(logging.Info, nil, "dropped database %s", deets.Database)
 	return nil
 }
 
@@ -208,7 +209,7 @@ func (m *mysql) LoadSchema(r io.Reader) error {
 // TruncateAll truncates all tables for the given connection.
 func (m *mysql) TruncateAll(tx *Connection) error {
 	var stmts []string
-	err := tx.RawQuery(mysqlTruncate, m.Details().Database, tx.MigrationTableName()).All(&stmts)
+	err := tx.RawQuery(mysqlTruncate, m.Details().Database, tx.MigrationTableName()).All(nil, &stmts)
 	if err != nil {
 		return err
 	}
@@ -223,7 +224,7 @@ func (m *mysql) TruncateAll(tx *Connection) error {
 	// #49: Re-enable foreign keys after truncation
 	qb.WriteString(" SET SESSION FOREIGN_KEY_CHECKS = 1;")
 
-	return tx.RawQuery(qb.String()).Exec()
+	return tx.RawQuery(qb.String()).Exec(nil)
 }
 
 func newMySQL(deets *ConnectionDetails) (dialect, error) {
@@ -281,11 +282,11 @@ func finalizerMySQL(cd *ConnectionDetails) {
 		// respect user specified options but print warning!
 		cd.setOptionWithDefault(k, cd.option(k), v)
 		if cd.option(k) != v { // when user-defined option exists
-			log(logging.Warn, "IMPORTANT! '%s: %s' option is required to work properly but your current setting is '%v: %v'.", k, v, k, cd.option(k))
-			log(logging.Warn, "It is highly recommended to remove '%v: %v' option from your config!", k, cd.option(k))
+			log(logging.Warn, nil, "IMPORTANT! '%s: %s' option is required to work properly but your current setting is '%v: %v'.", k, v, k, cd.option(k))
+			log(logging.Warn, nil, "It is highly recommended to remove '%v: %v' option from your config!", k, cd.option(k))
 		} // or override with `cd.Options[k] = v`?
 		if cd.URL != "" && !strings.Contains(cd.URL, k+"="+v) {
-			log(logging.Warn, "IMPORTANT! '%s=%s' option is required to work properly. Please add it to the database URL in the config!", k, v)
+			log(logging.Warn, nil, "IMPORTANT! '%s=%s' option is required to work properly. Please add it to the database URL in the config!", k, v)
 		} // or fix user specified url?
 	}
 }

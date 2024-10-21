@@ -78,7 +78,7 @@ func testInstrumentedDriver(p *suite.Suite) {
 	r.NoError(err)
 	r.NoError(c.Open())
 
-	err = c.WithContext(context.TODO()).RawQuery(query, 1).Exec()
+	err = c.WithContext(context.TODO()).RawQuery(query, 1).Exec(nil)
 	r.NoError(err)
 
 	wg.Wait()

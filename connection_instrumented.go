@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/Accefy/pop/logging"
 	"github.com/XSAM/otelsql"
 	mysqld "github.com/go-sql-driver/mysql"
-	"github.com/gobuffalo/pop/v6/logging"
 	pgx "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/luna-duclos/instrumentedsql"
@@ -28,7 +28,7 @@ func instrumentDriver(deets *ConnectionDetails, defaultDriverName string) (drive
 
 	if !deets.UseInstrumentedDriver {
 		if len(deets.InstrumentedDriverOptions) > 0 {
-			log(logging.Warn, "SQL driver instrumentation is disabled but `ConnectionDetails.InstrumentedDriverOptions` is not empty. Please double-check if this is a error.")
+			log(logging.Warn, nil, "SQL driver instrumentation is disabled but `ConnectionDetails.InstrumentedDriverOptions` is not empty. Please double-check if this is a error.")
 		}
 
 		// If instrumentation is disabled, we just return the driver name we got (e.g. "pgx").
@@ -36,7 +36,7 @@ func instrumentDriver(deets *ConnectionDetails, defaultDriverName string) (drive
 	}
 
 	if len(deets.InstrumentedDriverOptions) == 0 {
-		log(logging.Warn, "SQL driver instrumentation was enabled but no options have been passed to `ConnectionDetails.InstrumentedDriverOptions`. Instrumentation will therefore not result in any output.")
+		log(logging.Warn, nil, "SQL driver instrumentation was enabled but no options have been passed to `ConnectionDetails.InstrumentedDriverOptions`. Instrumentation will therefore not result in any output.")
 	}
 
 	var dr driver.Driver

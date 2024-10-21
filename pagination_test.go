@@ -51,13 +51,13 @@ func Test_Pagination(t *testing.T) {
 
 		for _, name := range []string{"Mark", "Joe", "Jane"} {
 			user := User{Name: nulls.NewString(name)}
-			err := tx.Create(&user)
+			err := tx.Create(nil, &user)
 			a.NoError(err)
 		}
 
 		u := Users{}
 		q := tx.Paginate(1, 2)
-		err := q.All(&u)
+		err := q.All(nil, &u)
 		a.NoError(err)
 		a.Equal(len(u), 2)
 
@@ -67,7 +67,7 @@ func Test_Pagination(t *testing.T) {
 		a.Equal(p.TotalPages, 2)
 
 		u = Users{}
-		err = tx.Where("name = 'Mark'").All(&u)
+		err = tx.Where("name = 'Mark'").All(nil, &u)
 		a.NoError(err)
 		a.Equal(reflect.ValueOf(&u).Elem().Len(), 1)
 	})

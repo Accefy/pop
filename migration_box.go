@@ -6,7 +6,7 @@ import (
 	"io/fs"
 	"strings"
 
-	"github.com/gobuffalo/pop/v6/logging"
+	"github.com/Accefy/pop/logging"
 )
 
 // MigrationBox is a wrapper around fs.FS and Migrator.
@@ -33,7 +33,7 @@ func NewMigrationBox(fsys fs.FS, c *Connection) (MigrationBox, error) {
 			if content == "" {
 				return nil
 			}
-			err = tx.RawQuery(content).Exec()
+			err = tx.RawQuery(content).Exec(nil)
 			if err != nil {
 				return fmt.Errorf("error executing %s, sql: %s: %w", mf.Path, content, err)
 			}
@@ -67,13 +67,13 @@ func (fm *MigrationBox) findMigrations(runner func(r io.Reader) func(mf Migratio
 		match, err := ParseMigrationFilename(info.Name())
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "unsupported dialect") {
-				log(logging.Warn, "ignoring migration file with %s", err.Error())
+				log(logging.Warn, nil, "ignoring migration file with %s", err.Error())
 				return nil
 			}
 			return err
 		}
 		if match == nil {
-			log(logging.Warn, "ignoring file %s because it does not match the migration file pattern", info.Name())
+			log(logging.Warn, nil, "ignoring file %s because it does not match the migration file pattern", info.Name())
 			return nil
 		}
 

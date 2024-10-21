@@ -21,11 +21,11 @@ func Test_Find(t *testing.T) {
 
 		for _, tc := range tCases {
 			user := User{Name: nulls.NewString(tc)}
-			err := tx.Create(&user)
+			err := tx.Create(nil, &user)
 			r.NoError(err)
 
 			u := User{}
-			err = tx.Find(&u, user.ID)
+			err = tx.Find(nil, &u, user.ID)
 			r.NoError(err)
 
 			r.NotEqual(u.ID, 0)
@@ -41,7 +41,7 @@ func Test_Create_MissingID(t *testing.T) {
 	transaction(func(tx *Connection) {
 		r := require.New(t)
 		client := Client{ClientID: "client-0001"}
-		err := tx.Create(&client)
+		err := tx.Create(nil, &client)
 		r.Error(err)
 		r.Contains(err.Error(), "model *pop.Client is missing required field ID")
 	})
@@ -53,10 +53,10 @@ func Test_Find_MissingID(t *testing.T) {
 	}
 	transaction(func(tx *Connection) {
 		r := require.New(t)
-		r.NoError(tx.RawQuery("INSERT INTO clients (id) VALUES (?)", "client-0001").Exec())
+		r.NoError(tx.RawQuery("INSERT INTO clients (id) VALUES (?)", "client-0001").Exec(nil))
 
 		u := Client{}
-		r.EqualError(tx.Find(&u, "client-0001"), "model *pop.Client is missing required field ID")
+		r.EqualError(tx.Find(nil, &u, "client-0001"), "model *pop.Client is missing required field ID")
 	})
 }
 
@@ -76,11 +76,11 @@ func Test_Find_LeadingZeros(t *testing.T) {
 
 		for _, v := range labels {
 			label := Label{ID: v}
-			err := tx.Create(&label)
+			err := tx.Create(nil, &label)
 			r.NoError(err)
 
 			l := Label{}
-			err = tx.Find(&l, v)
+			err = tx.Find(nil, &l, v)
 			r.NoError(err)
 
 			r.Equal(l.ID, v)
@@ -96,7 +96,7 @@ func Test_Select(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark"), Email: "mark@gobuffalo.io"}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		q := tx.Select("name", "email", "\n", "\t\n", "")
@@ -106,7 +106,7 @@ func Test_Select(t *testing.T) {
 		r.Equal(tx.Dialect.TranslateSQL("SELECT email, name FROM users AS users"), sql)
 
 		u := User{}
-		err = q.Find(&u, user.ID)
+		err = q.Find(nil, &u, user.ID)
 		r.NoError(err)
 
 		r.Equal(u.Email, "mark@gobuffalo.io")
@@ -123,15 +123,15 @@ func Test_Find_Eager_Has_Many(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		book := Book{Title: "Pop Book", Isbn: "PB1", UserID: nulls.NewInt(user.ID)}
-		err = tx.Create(&book)
+		err = tx.Create(nil, &book)
 		r.NoError(err)
 
 		u := User{}
-		err = tx.Eager("Books").Find(&u, user.ID)
+		err = tx.Eager("Books").Find(nil, &u, user.ID)
 		r.NoError(err)
 
 		r.NotEqual(u.ID, 0)
@@ -151,20 +151,20 @@ func Test_All_Eager_Preload_Mode(t *testing.T) {
 
 		for _, name := range []string{"Mark", "Joe", "Jane"} {
 			user := User{Name: nulls.NewString(name)}
-			err := tx.Create(&user)
+			err := tx.Create(nil, &user)
 			r.NoError(err)
 
 			if name == "Mark" {
 				for _, title := range []string{"Pop Book", "My Pop Book", "Asociations Book"} {
 					book := Book{Title: title, Isbn: "PB1", UserID: nulls.NewInt(user.ID)}
-					err = tx.Create(&book)
+					err = tx.Create(nil, &book)
 					r.NoError(err)
 				}
 			}
 		}
 
 		u := Users{}
-		err := tx.EagerPreload().All(&u)
+		err := tx.EagerPreload().All(nil, &u)
 		r.NoError(err)
 		r.Equal(len(u), 3)
 		r.Equal(len(u[0].Books), 3)
@@ -182,19 +182,19 @@ func Test_Find_Eager_Has_Many_Order_By(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		book1 := Book{Title: "Pop Book", Isbn: "PB1", UserID: nulls.NewInt(user.ID)}
-		err = tx.Create(&book1)
+		err = tx.Create(nil, &book1)
 		r.NoError(err)
 
 		book2 := Book{Title: "New Pop Book", Isbn: "PB2", UserID: nulls.NewInt(user.ID)}
-		err = tx.Create(&book2)
+		err = tx.Create(nil, &book2)
 		r.NoError(err)
 
 		u := User{}
-		err = tx.Eager().Find(&u, user.ID)
+		err = tx.Eager().Find(nil, &u, user.ID)
 		r.NoError(err)
 
 		r.Equal(len(u.Books), 2)
@@ -210,15 +210,15 @@ func Test_Find_Eager_Belongs_To(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark"), UserName: "mark"}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		book := Book{Title: "Pop Book", Isbn: "PB1", UserID: nulls.NewInt(user.ID)}
-		err = tx.Create(&book)
+		err = tx.Create(nil, &book)
 		r.NoError(err)
 
 		b := Book{}
-		err = tx.Eager().Find(&b, book.ID)
+		err = tx.Eager().Find(nil, &b, book.ID)
 		r.NoError(err)
 
 		r.NotEqual(b.ID, 0)
@@ -226,11 +226,11 @@ func Test_Find_Eager_Belongs_To(t *testing.T) {
 		r.Equal(b.User.ID, user.ID)
 
 		userAttr := UserAttribute{UserName: "mark", NickName: "Mark Z."}
-		err = tx.Create(&userAttr)
+		err = tx.Create(nil, &userAttr)
 		r.NoError(err)
 
 		uA := UserAttribute{}
-		err = tx.Eager().Find(&uA, userAttr.ID)
+		err = tx.Eager().Find(nil, &uA, userAttr.ID)
 		r.NoError(err)
 		r.Equal(uA.User.ID, user.ID)
 	})
@@ -244,15 +244,15 @@ func Test_Find_Eager_Belongs_To_Nulls(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		book := Book{Title: "Pop Book", Isbn: "PB1"}
-		err = tx.Create(&book)
+		err = tx.Create(nil, &book)
 		r.NoError(err)
 
 		b := Book{}
-		err = tx.Eager().Find(&b, book.ID)
+		err = tx.Eager().Find(nil, &b, book.ID)
 		r.NoError(err)
 	})
 }
@@ -265,15 +265,15 @@ func Test_Find_Eager_Belongs_To_Pointers(t *testing.T) {
 		r := require.New(t)
 
 		body := Body{}
-		err := tx.Create(&body)
+		err := tx.Create(nil, &body)
 		r.NoError(err)
 
 		head := Head{BodyID: body.ID}
-		err = tx.Create(&head)
+		err = tx.Create(nil, &head)
 		r.NoError(err)
 
 		b := Body{}
-		err = tx.Eager().Find(&b, body.ID)
+		err = tx.Eager().Find(nil, &b, body.ID)
 		r.NoError(err)
 	})
 }
@@ -286,15 +286,15 @@ func Test_Find_Eager_Has_One(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		coolSong := Song{Title: "Hook - Blues Traveler", UserID: user.ID}
-		err = tx.Create(&coolSong)
+		err = tx.Create(nil, &coolSong)
 		r.NoError(err)
 
 		u := User{}
-		err = tx.Eager().Find(&u, user.ID)
+		err = tx.Eager().Find(nil, &u, user.ID)
 		r.NoError(err)
 
 		r.NotEqual(u.ID, 0)
@@ -304,11 +304,11 @@ func Test_Find_Eager_Has_One(t *testing.T) {
 		// eager should work with rawquery
 		uid := u.ID
 		u = User{}
-		err = tx.RawQuery("select * from users where id=?", uid).First(&u)
+		err = tx.RawQuery("select * from users where id=?", uid).First(nil, &u)
 		r.NoError(err)
 		r.Equal(u.FavoriteSong.ID, uuid.Nil)
 
-		err = tx.RawQuery("select * from users where id=?", uid).Eager("FavoriteSong").First(&u)
+		err = tx.RawQuery("select * from users where id=?", uid).Eager("FavoriteSong").First(nil, &u)
 		r.NoError(err)
 		r.Equal(u.FavoriteSong.ID, coolSong.ID)
 	})
@@ -322,15 +322,15 @@ func Test_Find_Eager_Has_One_With_Inner_Associations_Pointer(t *testing.T) {
 		r := require.New(t)
 
 		user := UserPointerAssocs{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		coolSong := Song{Title: "Hook - Blues Traveler", UserID: user.ID}
-		err = tx.Create(&coolSong)
+		err = tx.Create(nil, &coolSong)
 		r.NoError(err)
 
 		u := UserPointerAssocs{}
-		err = tx.Eager("FavoriteSong.ComposedBy").Find(&u, user.ID)
+		err = tx.Eager("FavoriteSong.ComposedBy").Find(nil, &u, user.ID)
 		r.NoError(err)
 
 		r.NotEqual(u.ID, 0)
@@ -340,11 +340,11 @@ func Test_Find_Eager_Has_One_With_Inner_Associations_Pointer(t *testing.T) {
 		// eager should work with rawquery
 		uid := u.ID
 		u = UserPointerAssocs{}
-		err = tx.RawQuery("select * from users where id=?", uid).First(&u)
+		err = tx.RawQuery("select * from users where id=?", uid).First(nil, &u)
 		r.NoError(err)
 		r.Nil(u.FavoriteSong)
 
-		err = tx.RawQuery("select * from users where id=?", uid).Eager("FavoriteSong").First(&u)
+		err = tx.RawQuery("select * from users where id=?", uid).Eager("FavoriteSong").First(nil, &u)
 		r.NoError(err)
 		r.Equal(u.FavoriteSong.ID, coolSong.ID)
 	})
@@ -358,19 +358,19 @@ func Test_Find_Eager_Has_One_With_Inner_Associations_Struct(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		composer := Composer{Name: "Blues Traveler"}
-		err = tx.Create(&composer)
+		err = tx.Create(nil, &composer)
 		r.NoError(err)
 
 		coolSong := Song{Title: "Hook", UserID: user.ID, ComposedByID: composer.ID}
-		err = tx.Create(&coolSong)
+		err = tx.Create(nil, &coolSong)
 		r.NoError(err)
 
 		u := User{}
-		err = tx.Eager("FavoriteSong.ComposedBy").Find(&u, user.ID)
+		err = tx.Eager("FavoriteSong.ComposedBy").Find(nil, &u, user.ID)
 		r.NoError(err)
 
 		r.NotEqual(u.ID, 0)
@@ -388,19 +388,19 @@ func Test_Find_Eager_Has_One_With_Inner_Associations_Slice(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		book := Book{Title: "Pop Book", Isbn: "PB1", UserID: nulls.NewInt(user.ID)}
-		err = tx.Create(&book)
+		err = tx.Create(nil, &book)
 		r.NoError(err)
 
 		writer := Writer{Name: "Mark Bates", BookID: book.ID}
-		err = tx.Create(&writer)
+		err = tx.Create(nil, &writer)
 		r.NoError(err)
 
 		u := User{}
-		err = tx.Eager("Books.Writers").Find(&u, user.ID)
+		err = tx.Eager("Books.Writers").Find(nil, &u, user.ID)
 		r.NoError(err)
 
 		r.NotEqual(u.ID, 0)
@@ -422,20 +422,20 @@ func Test_Eager_Bad_Format(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		u := User{}
-		err = tx.Eager("Books.").First(&u)
+		err = tx.Eager("Books.").First(nil, &u)
 		r.Error(err)
 
-		err = tx.Eager("Books.*").First(&u)
+		err = tx.Eager("Books.*").First(nil, &u)
 		r.Error(err)
 
-		err = tx.Eager(".*").First(&u)
+		err = tx.Eager(".*").First(nil, &u)
 		r.Error(err)
 
-		err = tx.Eager(".").First(&u)
+		err = tx.Eager(".").First(nil, &u)
 		r.Error(err)
 	})
 }
@@ -448,19 +448,19 @@ func Test_Find_Eager_Many_To_Many(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		address := Address{Street: "Pop Avenue", HouseNumber: 1}
-		err = tx.Create(&address)
+		err = tx.Create(nil, &address)
 		r.NoError(err)
 
 		ownerProperty := UsersAddress{UserID: user.ID, AddressID: address.ID}
-		err = tx.Create(&ownerProperty)
+		err = tx.Create(nil, &ownerProperty)
 		r.NoError(err)
 
 		u := User{}
-		err = tx.Eager("Houses").Find(&u, user.ID)
+		err = tx.Eager("Houses").Find(nil, &u, user.ID)
 		r.NoError(err)
 
 		r.NotEqual(u.ID, 0)
@@ -470,27 +470,27 @@ func Test_Find_Eager_Many_To_Many(t *testing.T) {
 		r.Equal(u.Houses[0].Street, address.Street)
 
 		address2 := Address{Street: "Pop Avenue 2", HouseNumber: 1}
-		err = tx.Create(&address2)
+		err = tx.Create(nil, &address2)
 		r.NoError(err)
 
 		user2 := User{Name: nulls.NewString("Mark 2")}
-		err = tx.Create(&user2)
+		err = tx.Create(nil, &user2)
 		r.NoError(err)
 
 		ownerProperty2 := UsersAddress{UserID: user2.ID, AddressID: address2.ID}
-		err = tx.Create(&ownerProperty2)
+		err = tx.Create(nil, &ownerProperty2)
 		r.NoError(err)
 
 		// eager should work with rawquery
 		uid := u.ID
 		u = User{}
-		err = tx.RawQuery("select * from users where id=?", uid).Eager("Houses").First(&u)
+		err = tx.RawQuery("select * from users where id=?", uid).Eager("Houses").First(nil, &u)
 		r.NoError(err)
 		r.Equal(1, len(u.Houses))
 
 		// eager ALL
 		var users []User
-		err = tx.RawQuery("select * from users order by created_at asc").Eager("Houses").All(&users)
+		err = tx.RawQuery("select * from users order by created_at asc").Eager("Houses").All(nil, &users)
 		r.NoError(err)
 		r.Equal(2, len(users))
 
@@ -514,15 +514,15 @@ func Test_Load_Associations_Loaded_Model(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		book := Book{Title: "Pop Book", Isbn: "PB1", UserID: nulls.NewInt(user.ID)}
-		err = tx.Create(&book)
+		err = tx.Create(nil, &book)
 		r.NoError(err)
 
 		u := User{}
-		err = tx.Find(&u, user.ID)
+		err = tx.Find(nil, &u, user.ID)
 
 		r.NoError(err)
 		r.Zero(len(u.Books))
@@ -543,15 +543,15 @@ func Test_First(t *testing.T) {
 		r := require.New(t)
 
 		first := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&first)
+		err := tx.Create(nil, &first)
 		r.NoError(err)
 
 		last := User{Name: nulls.NewString("Mark")}
-		err = tx.Create(&last)
+		err = tx.Create(nil, &last)
 		r.NoError(err)
 
 		u := User{}
-		err = tx.Where("name = 'Mark'").First(&u)
+		err = tx.Where("name = 'Mark'").First(nil, &u)
 		r.NoError(err)
 
 		r.Equal(first.ID, u.ID)
@@ -566,15 +566,15 @@ func Test_Last(t *testing.T) {
 		r := require.New(t)
 
 		first := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&first)
+		err := tx.Create(nil, &first)
 		r.NoError(err)
 
 		last := User{Name: nulls.NewString("Mark")}
-		err = tx.Create(&last)
+		err = tx.Create(nil, &last)
 		r.NoError(err)
 
 		u := User{}
-		err = tx.Where("name = 'Mark'").Last(&u)
+		err = tx.Where("name = 'Mark'").Last(nil, &u)
 		r.NoError(err)
 
 		r.Equal(last.ID, u.ID)
@@ -590,17 +590,17 @@ func Test_All(t *testing.T) {
 
 		for _, name := range []string{"Mark", "Joe", "Jane"} {
 			user := User{Name: nulls.NewString(name)}
-			err := tx.Create(&user)
+			err := tx.Create(nil, &user)
 			r.NoError(err)
 		}
 
 		u := Users{}
-		err := tx.All(&u)
+		err := tx.All(nil, &u)
 		r.NoError(err)
 		r.Equal(len(u), 3)
 
 		u = Users{}
-		err = tx.Where("name = 'Mark'").All(&u)
+		err = tx.Where("name = 'Mark'").All(nil, &u)
 		r.NoError(err)
 		r.Equal(len(u), 1)
 	})
@@ -615,16 +615,16 @@ func Test_All_Eager_Slice_With_All(t *testing.T) {
 
 		for _, name := range []string{"Mark", "Joe", "Jane"} {
 			user := User{Name: nulls.NewString(name)}
-			err := tx.Create(&user)
+			err := tx.Create(nil, &user)
 			r.NoError(err)
 
 			book := Book{Title: "Book of " + user.Name.String, UserID: nulls.NewInt(user.ID)}
-			err = tx.Create(&book)
+			err = tx.Create(nil, &book)
 			r.NoError(err)
 		}
 
 		u := Users{}
-		err := tx.Eager("Books.User").All(&u)
+		err := tx.Eager("Books.User").All(nil, &u)
 		r.NoError(err)
 		r.Equal(len(u), 3)
 
@@ -643,18 +643,18 @@ func Test_All_Eager(t *testing.T) {
 
 		for _, name := range []string{"Mark", "Joe", "Jane"} {
 			user := User{Name: nulls.NewString(name)}
-			err := tx.Create(&user)
+			err := tx.Create(nil, &user)
 			r.NoError(err)
 
 			if name == "Mark" {
 				book := Book{Title: "Pop Book", Isbn: "PB1", UserID: nulls.NewInt(user.ID)}
-				err = tx.Create(&book)
+				err = tx.Create(nil, &book)
 				r.NoError(err)
 			}
 		}
 
 		u := Users{}
-		err := tx.Eager(" Books ", " ").Where("name = 'Mark'").All(&u)
+		err := tx.Eager(" Books ", " ").Where("name = 'Mark'").All(nil, &u)
 		r.NoError(err)
 		r.Equal(len(u), 1)
 		r.Equal(len(u[0].Books), 1)
@@ -669,16 +669,16 @@ func Test_All_Eager_For_Query(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		book := Book{Title: "Pop Book", Isbn: "PB1", UserID: nulls.NewInt(user.ID)}
-		err = tx.Create(&book)
+		err = tx.Create(nil, &book)
 		r.NoError(err)
 
 		u := Users{}
 		q := tx.Q()
-		err = q.Eager("Books").Where("name = 'Mark'").All(&u)
+		err = q.Eager("Books").Where("name = 'Mark'").All(nil, &u)
 		r.NoError(err)
 		r.Equal(len(u), 1)
 		r.Equal(len(u[0].Books), 1)
@@ -693,11 +693,11 @@ func Test_All_Eager_Field_Not_Found_Error(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		u := Users{}
-		err = tx.Eager("FieldNotFound").Where("name = 'Mark'").All(&u)
+		err = tx.Eager("FieldNotFound").Where("name = 'Mark'").All(nil, &u)
 		r.Error(err)
 		r.Equal("could not retrieve associations: field FieldNotFound does not exist in model User", err.Error())
 	})
@@ -711,19 +711,19 @@ func Test_All_Eager_Allow_Chain_Call(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		coolSong := Song{Title: "Hook - Blues Traveler", UserID: user.ID}
-		err = tx.Create(&coolSong)
+		err = tx.Create(nil, &coolSong)
 		r.NoError(err)
 
 		book := Book{Title: "Pop Book", Isbn: "PB1", UserID: nulls.NewInt(user.ID)}
-		err = tx.Create(&book)
+		err = tx.Create(nil, &book)
 		r.NoError(err)
 
 		u := Users{}
-		err = tx.Eager("Books").Eager("FavoriteSong").Where("name = 'Mark'").All(&u)
+		err = tx.Eager("Books").Eager("FavoriteSong").Where("name = 'Mark'").All(nil, &u)
 		r.NoError(err)
 		r.Equal(len(u), 1)
 		r.Equal(len(u[0].Books), 1)
@@ -739,26 +739,26 @@ func Test_Count(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
-		c, err := tx.Count(&user)
+		c, err := tx.Count(nil, &user)
 		r.NoError(err)
 		r.Equal(c, 1)
 
-		c, err = tx.Where("1=1").CountByField(&user, "distinct id")
+		c, err = tx.Where("1=1").CountByField(nil, &user, "distinct id")
 		r.NoError(err)
 		r.Equal(c, 1)
 		// should ignore order in count
 
-		c, err = tx.Order("id desc").Count(&user)
+		c, err = tx.Order("id desc").Count(nil, &user)
 		r.NoError(err)
 		r.Equal(c, 1)
 
 		var uAQ []UsersAddressQuery
-		_, err = Q(tx).Select("users_addresses.*").LeftJoin("users", "users.id=users_addresses.user_id").Count(&uAQ)
+		_, err = Q(tx).Select("users_addresses.*").LeftJoin("users", "users.id=users_addresses.user_id").Count(nil, &uAQ)
 		r.NoError(err)
 
-		_, err = Q(tx).Select("users_addresses.*", "users.name", "users.email").LeftJoin("users", "users.id=users_addresses.user_id").Count(&uAQ)
+		_, err = Q(tx).Select("users_addresses.*", "users.name", "users.email").LeftJoin("users", "users.id=users_addresses.user_id").Count(nil, &uAQ)
 		r.NoError(err)
 	})
 }
@@ -784,7 +784,7 @@ func Test_Count_Disregards_Pagination(t *testing.T) {
 
 		for _, name := range names {
 			user := User{Name: nulls.NewString(name)}
-			err := tx.Create(&user)
+			err := tx.Create(nil, &user)
 			r.NoError(err)
 		}
 
@@ -792,13 +792,13 @@ func Test_Count_Disregards_Pagination(t *testing.T) {
 		secondUsers := Users{}
 
 		q := tx.Paginate(1, 3)
-		r.NoError(q.All(&firstUsers))
+		r.NoError(q.All(nil, &firstUsers))
 		r.Equal(len(names), q.Paginator.TotalEntriesSize) // ensure paginator populates count
 		r.Equal(3, len(firstUsers))
 
 		firstUsers = Users{}
 		q = tx.RawQuery("select * from users").Paginate(1, 3)
-		r.NoError(q.All(&firstUsers))
+		r.NoError(q.All(nil, &firstUsers))
 		r.Equal(1, q.Paginator.Page)
 		r.Equal(3, q.Paginator.PerPage)
 		r.Equal(len(names), q.Paginator.TotalEntriesSize) // ensure paginator populates count
@@ -807,7 +807,7 @@ func Test_Count_Disregards_Pagination(t *testing.T) {
 		totalFirstPage := q.Paginator.TotalPages
 
 		q = tx.Paginate(2, 3)
-		r.NoError(q.All(&secondUsers))
+		r.NoError(q.All(nil, &secondUsers))
 
 		r.Equal(3, len(secondUsers))
 		totalSecondPage := q.Paginator.TotalPages
@@ -818,26 +818,26 @@ func Test_Count_Disregards_Pagination(t *testing.T) {
 
 		firstUsers = Users{}
 		q = tx.RawQuery("select * from users limit  2").Paginate(1, 5)
-		err := q.All(&firstUsers)
+		err := q.All(nil, &firstUsers)
 		r.NoError(err)
 		r.Equal(2, len(firstUsers)) // raw query limit applies
 
 		firstUsers = Users{}
 		q = tx.RawQuery("select * from users limit 2 offset 1").Paginate(1, 5)
-		err = q.All(&firstUsers)
+		err = q.All(nil, &firstUsers)
 		r.NoError(err)
 		r.Equal(2, len(firstUsers))
 
 		firstUsers = Users{}
 		q = tx.RawQuery("select * from users limit 2 offset\t1").Paginate(1, 5)
-		err = q.All(&firstUsers)
+		err = q.All(nil, &firstUsers)
 		r.NoError(err)
 		r.Equal(2, len(firstUsers))
 
 		firstUsers = Users{}
 		q = tx.RawQuery(`select * from users limit 2 offset
 			1`).Paginate(1, 5)
-		err = q.All(&firstUsers)
+		err = q.All(nil, &firstUsers)
 		r.NoError(err)
 		r.Equal(2, len(firstUsers))
 
@@ -845,20 +845,20 @@ func Test_Count_Disregards_Pagination(t *testing.T) {
 		q = tx.RawQuery(`select * from users limit 2 offset
 			1
 			`).Paginate(1, 5) // ending space and tab
-		err = q.All(&firstUsers)
+		err = q.All(nil, &firstUsers)
 		r.NoError(err)
 		r.Equal(2, len(firstUsers))
 
 		if tx.Dialect.Name() == "sqlite" {
 			firstUsers = Users{}
 			q = tx.RawQuery("select * from users limit 2,1").Paginate(1, 5)
-			err = q.All(&firstUsers)
+			err = q.All(nil, &firstUsers)
 			r.NoError(err)
 			r.Equal(2, len(firstUsers))
 
 			firstUsers = Users{}
 			q = tx.RawQuery("select * from users limit 2 , 1").Paginate(1, 5)
-			err = q.All(&firstUsers)
+			err = q.All(nil, &firstUsers)
 			r.NoError(err)
 			r.Equal(2, len(firstUsers))
 		}
@@ -866,7 +866,7 @@ func Test_Count_Disregards_Pagination(t *testing.T) {
 		if tx.Dialect.Name() == "postgresql" {
 			firstUsers = Users{}
 			q = tx.RawQuery("select * from users FETCH FIRST 3 rows only").Paginate(1, 5)
-			err = q.All(&firstUsers)
+			err = q.All(nil, &firstUsers)
 			r.NoError(err)
 			r.Equal(3, len(firstUsers)) // should fetch only 3
 		}
@@ -881,26 +881,26 @@ func Test_Count_RawQuery(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
-		c, err := tx.RawQuery("select * from users as users").Count(nil)
+		c, err := tx.RawQuery("select * from users as users").Count(nil, nil)
 		r.NoError(err)
 		r.Equal(c, 1)
 
-		c, err = tx.RawQuery("select * from users as users where id = -1").Count(nil)
+		c, err = tx.RawQuery("select * from users as users where id = -1").Count(nil, nil)
 		r.NoError(err)
 		r.Equal(c, 0)
 
-		c, err = tx.RawQuery("select name, max(created_at) from users as users group by name").Count(nil)
+		c, err = tx.RawQuery("select name, max(created_at) from users as users group by name").Count(nil, nil)
 		r.NoError(err)
 		r.Equal(c, 1)
 
-		c, err = tx.RawQuery("select name from users order by name asc limit 5").Count(nil)
+		c, err = tx.RawQuery("select name from users order by name asc limit 5").Count(nil, nil)
 		r.NoError(err)
 		r.Equal(c, 1)
 
-		c, err = tx.RawQuery("select name from users order by name asc limit 5 offset 0").Count(nil)
+		c, err = tx.RawQuery("select name from users order by name asc limit 5 offset 0").Count(nil, nil)
 		r.NoError(err)
 		r.Equal(c, 1)
 	})
@@ -917,7 +917,7 @@ func Test_Exists(t *testing.T) {
 		r.False(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		t, _ = tx.Where("id = ?", user.ID).Exists("users")
@@ -932,15 +932,15 @@ func Test_FindManyToMany(t *testing.T) {
 	transaction(func(tx *Connection) {
 		r := require.New(t)
 		parent := &Parent{}
-		r.NoError(tx.Create(parent))
+		r.NoError(tx.Create(nil, parent))
 
 		student := &Student{}
-		r.NoError(tx.Create(student))
+		r.NoError(tx.Create(nil, student))
 
-		r.NoError(tx.RawQuery("INSERT INTO parents_students (student_id, parent_id) VALUES(?,?)", student.ID, parent.ID).Exec())
+		r.NoError(tx.RawQuery("INSERT INTO parents_students (student_id, parent_id) VALUES(?,?)", student.ID, parent.ID).Exec(nil))
 
 		p := &Parent{}
-		err := tx.Eager("Students").Find(p, parent.ID)
+		err := tx.Eager("Students").Find(nil, p, parent.ID)
 		r.NoError(err)
 	})
 }
@@ -953,27 +953,27 @@ func Test_FindMultipleInnerHasMany(t *testing.T) {
 		r := require.New(t)
 
 		user := User{Name: nulls.NewString("Mark")}
-		err := tx.Create(&user)
+		err := tx.Create(nil, &user)
 		r.NoError(err)
 
 		book := Book{Title: "Pop Book", Isbn: "PB1", UserID: nulls.NewInt(user.ID)}
-		err = tx.Create(&book)
+		err = tx.Create(nil, &book)
 		r.NoError(err)
 
 		writer := Writer{Name: "Jhon", BookID: book.ID}
-		err = tx.Create(&writer)
+		err = tx.Create(nil, &writer)
 		r.NoError(err)
 
 		friend := Friend{FirstName: "Frank", LastName: "Kafka", WriterID: writer.ID}
-		err = tx.Create(&friend)
+		err = tx.Create(nil, &friend)
 		r.NoError(err)
 
 		address := Address{Street: "St 27", HouseNumber: 27, WriterID: writer.ID}
-		err = tx.Create(&address)
+		err = tx.Create(nil, &address)
 		r.NoError(err)
 
 		u := User{}
-		err = tx.Eager("Books.Writers.Addresses", "Books.Writers.Friends").Find(&u, user.ID)
+		err = tx.Eager("Books.Writers.Addresses", "Books.Writers.Friends").Find(nil, &u, user.ID)
 		r.NoError(err)
 
 		r.Len(u.Books, 1)

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gobuffalo/pop/v6"
+	"github.com/Accefy/pop"
 	"github.com/spf13/cobra"
 )
 

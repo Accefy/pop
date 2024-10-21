@@ -14,11 +14,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Accefy/pop/columns"
 	"github.com/Accefy/pop/internal/defaults"
+	"github.com/Accefy/pop/logging"
 	"github.com/gobuffalo/fizz"
 	"github.com/gobuffalo/fizz/translators"
-	"github.com/gobuffalo/pop/v6/columns"
-	"github.com/gobuffalo/pop/v6/logging"
+	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -70,7 +71,7 @@ func (m *sqlite) MigrationURL() string {
 	return m.ConnectionDetails.URL
 }
 
-func (m *sqlite) Create(c *Connection, model *Model, cols columns.Columns) error {
+func (m *sqlite) Create(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns) error {
 	return m.locker(m.smGil, func() error {
 		keyType, err := model.PrimaryKeyType()
 		if err != nil {
@@ -87,7 +88,7 @@ func (m *sqlite) Create(c *Connection, model *Model, cols columns.Columns) error
 			} else {
 				query = fmt.Sprintf("INSERT INTO %s DEFAULT VALUES", m.Quote(model.TableName()))
 			}
-			txlog(logging.SQL, c, query, model.Value)
+			txlog(logging.SQL, requestID, c, query, model.Value)
 			res, err := c.Store.NamedExecContext(model.ctx, query, model.Value)
 			if err != nil {
 				return err
@@ -101,26 +102,26 @@ func (m *sqlite) Create(c *Connection, model *Model, cols columns.Columns) error
 			}
 			return nil
 		}
-		if err := genericCreate(c, model, cols, m); err != nil {
+		if err := genericCreate(c, requestID, model, cols, m); err != nil {
 			return fmt.Errorf("sqlite create: %w", err)
 		}
 		return nil
 	})
 }
 
-func (m *sqlite) Update(c *Connection, model *Model, cols columns.Columns) error {
+func (m *sqlite) Update(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns) error {
 	return m.locker(m.smGil, func() error {
-		if err := genericUpdate(c, model, cols, m); err != nil {
+		if err := genericUpdate(c, requestID, model, cols, m); err != nil {
 			return fmt.Errorf("sqlite update: %w", err)
 		}
 		return nil
 	})
 }
 
-func (m *sqlite) UpdateQuery(c *Connection, model *Model, cols columns.Columns, query Query) (int64, error) {
+func (m *sqlite) UpdateQuery(c *Connection, requestID *uuid.UUID, model *Model, cols columns.Columns, query Query) (int64, error) {
 	rowsAffected := int64(0)
 	err := m.locker(m.smGil, func() error {
-		if n, err := genericUpdateQuery(c, model, cols, m, query, sqlx.QUESTION); err != nil {
+		if n, err := genericUpdateQuery(c, requestID, model, cols, m, query, sqlx.QUESTION); err != nil {
 			rowsAffected = n
 			return fmt.Errorf("sqlite update query: %w", err)
 		} else {
@@ -131,31 +132,31 @@ func (m *sqlite) UpdateQuery(c *Connection, model *Model, cols columns.Columns, 
 	return rowsAffected, err
 }
 
-func (m *sqlite) Destroy(c *Connection, model *Model) error {
+func (m *sqlite) Destroy(c *Connection, requestID *uuid.UUID, model *Model) error {
 	return m.locker(m.smGil, func() error {
-		if err := genericDestroy(c, model, m); err != nil {
+		if err := genericDestroy(c, requestID, model, m); err != nil {
 			return fmt.Errorf("sqlite destroy: %w", err)
 		}
 		return nil
 	})
 }
 
-func (m *sqlite) Delete(c *Connection, model *Model, query Query) error {
-	return genericDelete(c, model, query)
+func (m *sqlite) Delete(c *Connection, requestID *uuid.UUID, model *Model, query Query) error {
+	return genericDelete(c, requestID, model, query)
 }
 
-func (m *sqlite) SelectOne(c *Connection, model *Model, query Query) error {
+func (m *sqlite) SelectOne(c *Connection, requestID *uuid.UUID, model *Model, query Query) error {
 	return m.locker(m.smGil, func() error {
-		if err := genericSelectOne(c, model, query); err != nil {
+		if err := genericSelectOne(c, requestID, model, query); err != nil {
 			return fmt.Errorf("sqlite select one: %w", err)
 		}
 		return nil
 	})
 }
 
-func (m *sqlite) SelectMany(c *Connection, models *Model, query Query) error {
+func (m *sqlite) SelectMany(c *Connection, requestID *uuid.UUID, models *Model, query Query) error {
 	return m.locker(m.smGil, func() error {
-		if err := genericSelectMany(c, models, query); err != nil {
+		if err := genericSelectMany(c, requestID, models, query); err != nil {
 			return fmt.Errorf("sqlite select many: %w", err)
 		}
 		return nil
@@ -187,7 +188,7 @@ func (m *sqlite) CreateDB() error {
 	// Checking whether the url specifies in-memory mode
 	// as specified in https://github.com/mattn/go-sqlite3#faq
 	if strings.Contains(durl, ":memory:") || strings.Contains(durl, "mode=memory") {
-		log(logging.Info, "in memory db selected, no database file created.")
+		log(logging.Info, nil, "in memory db selected, no database file created.")
 
 		return nil
 	}
@@ -207,7 +208,7 @@ func (m *sqlite) CreateDB() error {
 	}
 	_ = f.Close()
 
-	log(logging.Info, "created database '%s'", durl)
+	log(logging.Info, nil, "created database '%s'", durl)
 	return nil
 }
 
@@ -216,7 +217,7 @@ func (m *sqlite) DropDB() error {
 	if err != nil {
 		return fmt.Errorf("could not drop SQLite database %s: %w", m.ConnectionDetails.Database, err)
 	}
-	log(logging.Info, "dropped database '%s'", m.ConnectionDetails.Database)
+	log(logging.Info, nil, "dropped database '%s'", m.ConnectionDetails.Database)
 	return nil
 }
 
@@ -243,7 +244,7 @@ func (m *sqlite) LoadSchema(r io.Reader) error {
 		defer in.Close()
 		io.Copy(in, r)
 	}()
-	log(logging.SQL, strings.Join(cmd.Args, " "))
+	log(logging.SQL, nil, strings.Join(cmd.Args, " "))
 	err = cmd.Start()
 	if err != nil {
 		return err
@@ -254,7 +255,7 @@ func (m *sqlite) LoadSchema(r io.Reader) error {
 		return err
 	}
 
-	log(logging.Info, "loaded schema for %s", m.Details().Database)
+	log(logging.Info, nil, "loaded schema for %s", m.Details().Database)
 	return nil
 }
 
@@ -264,7 +265,7 @@ func (m *sqlite) TruncateAll(tx *Connection) error {
 		Name string `db:"name"`
 	}{}
 
-	err := tx.RawQuery(tableNames).All(&names)
+	err := tx.RawQuery(tableNames).All(nil, &names)
 	if err != nil {
 		return err
 	}
@@ -275,7 +276,7 @@ func (m *sqlite) TruncateAll(tx *Connection) error {
 	for _, n := range names {
 		stmts = append(stmts, fmt.Sprintf("DELETE FROM %s", m.Quote(n.Name)))
 	}
-	return tx.RawQuery(strings.Join(stmts, "; ")).Exec()
+	return tx.RawQuery(strings.Join(stmts, "; ")).Exec(nil)
 }
 
 func newSQLite(deets *ConnectionDetails) (dialect, error) {
@@ -332,11 +333,11 @@ func finalizerSQLite(cd *ConnectionDetails) {
 		// respect user specified options but print warning!
 		cd.setOptionWithDefault(k, cd.option(k), v)
 		if cd.option(k) != v { // when user-defined option exists
-			log(logging.Warn, "IMPORTANT! '%s: %s' option is required to work properly but your current setting is '%v: %v'.", k, v, k, cd.option(k))
-			log(logging.Warn, "It is highly recommended to remove '%v: %v' option from your config!", k, cd.option(k))
+			log(logging.Warn, nil, "IMPORTANT! '%s: %s' option is required to work properly but your current setting is '%v: %v'.", k, v, k, cd.option(k))
+			log(logging.Warn, nil, "It is highly recommended to remove '%v: %v' option from your config!", k, cd.option(k))
 		} // or override with `cd.Options[k] = v`?
 		if cd.URL != "" && !strings.Contains(cd.URL, k+"="+v) {
-			log(logging.Warn, "IMPORTANT! '%s=%s' option is required to work properly. Please add it to the database URL in the config!", k, v)
+			log(logging.Warn, nil, "IMPORTANT! '%s=%s' option is required to work properly. Please add it to the database URL in the config!", k, v)
 		} // or fix user specified url?
 	}
 }
