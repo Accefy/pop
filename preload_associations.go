@@ -499,7 +499,7 @@ func preloadManyToMany(tx *Connection, asoc *AssociationMetaInfo, mmi *ModelMeta
 	q.eager = false
 	q.eagerFields = []string{}
 
-	if strings.TrimSpace(asoc.Field.Tag.Gset("order_by")) != "" {
+	if strings.TrimSpace(asoc.Field.Tag.Get("order_by")) != "" {
 		q.Order(asoc.Field.Tag.Get("order_by"))
 	}
 
